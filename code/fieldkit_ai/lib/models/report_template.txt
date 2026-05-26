@@ -1,0 +1,29 @@
+# REPORT DI MANUTENZIONE TECNICA E CONFORMITÀ
+**Codice Report:** [ID_GENERATO_DA_AI]
+**Operatore Responsabile:** [NOME_OPERATORE]
+**Data Ispezione:** [DATA_OGGI]
+
+## 1. ANAGRAFICA IMPIANTO
+- **Matricola Impianto:** [MATRICOLA]
+- **Tipologia Impianto:** [TIPO_IMPIANTO]
+- **Ubicazione:** [UBICAZIONE_CLIENTE]
+- **Normativa di Riferimento applicata:** [NORMATIVA_RIFERIMENTO]
+
+## 2. STATO DI CONSERVAZIONE E ANALISI VISIVA
+- **Stato Generale:** [CONFORME / NON CONFORME / DA ATTENZIONARE]
+- **Analisi dei Componenti Critici:**
+  * Componente A: [Stato e usura rilevati]
+  * Componente B: [Stato e usura rilevati]
+- **Dettagli da Analisi Multimediale (Foto/Video):** [Descrizione dettagliata di ciò che si vede nelle immagini allegate]
+
+## 3. QUESTIONARIO DI VERIFICA AI (INTEGRAZIONE NORMATIVA)
+- **Verifica A:** [Risposta fornita all'AI]
+- **Verifica B:** [Risposta fornita all'AI]
+
+## 4. AZIONI CORRETTIVE E RACCOMANDAZIONI
+- **Interventi Immediati Richiesti:** [Sì/No + Descrizione]
+- **Pianificazione Prossimo Controllo:** [Data consigliata]
+
+## 5. DICHIARAZIONE DI RESPONSABILITÀ (D.M. CONTROLLI 2026)
+*Il sottoscritto [NOME_OPERATORE] dichiara sotto la propria responsabilità penale e professionale che l'impianto in oggetto è stato sottoposto alle verifiche sopra descritte in conformità alle norme vigenti.*
+**Firma Elettronica Certificata:** [FIRMA_OPERATORE]
