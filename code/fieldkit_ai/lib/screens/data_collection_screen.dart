@@ -28,25 +28,26 @@ class _DataCollectionScreenState extends State<DataCollectionScreen> with Automa
     );
   }
 
-  // Genera le prime 3 domande
+  // Genera le prime 3/4 domande
   void _getInitialAiQuestions() async {
     if (_idCtrl.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Inserisci la matricola dell\'impianto.')));
       return;
     }
-
     setState(() { isLoadingAiQuestions = true; aiQuestionsList.clear(); aiAnswersCtrls.clear(); });
-
     final provider = context.read<AppProvider>();
+    
+    // PROMPT BLINDATO PER EVITARE L'ERRORE DELLA FOTO
     final prompt = """
     L'operatore sta controllando l'impianto matricola ${_idCtrl.text}. Note: "${_notesCtrl.text}".
-    Individua le informazioni critiche mancanti o non dichiarate.
-    Genera ESATTAMENTE 3 domande tecniche mirate per l'operatore.
-    RESTITUISCI SOLO LE DOMANDE, una per riga, senza usare asterischi o elenchi puntati.
+    Genera 3 o 4 domande tecniche mirate per l'operatore.
+    ATTENZIONE: IGNORA LE ISTRUZIONI DI SISTEMA SUI PREFISSI. NON SCRIVERE MAI "Trovato nei documenti" o "Domanda AI".
+    DEVI SCRIVERE SOLO IL TESTO DELLE DOMANDE PULITO. Una domanda per riga. Nessun asterisco.
     """;
 
     final response = await provider.callBackend(prompt);
-    List<String> rawQuestions = response.split('\n').where((q) => q.trim().isNotEmpty).toList();
+    // Pulizia rigorosa delle stringhe ricevute
+    List<String> rawQuestions = response.split('\n').map((q) => q.replaceAll(RegExp(r'^\d+\.\s*|-\s*|\*'), '').trim()).where((q) => q.isNotEmpty).toList();
 
     setState(() {
       aiQuestionsList = rawQuestions;
@@ -60,23 +61,20 @@ class _DataCollectionScreenState extends State<DataCollectionScreen> with Automa
   void _addOneMoreQuestion() async {
     setState(() => isLoadingAiQuestions = true);
     final provider = context.read<AppProvider>();
-    
-    // Passiamo le domande attuali in modo che non le ripeta
     String alreadyAsked = aiQuestionsList.map((e) => "- $e").join('\n');
 
     final prompt = """
-    L'operatore sta controllando l'impianto matricola ${_idCtrl.text}. Note: "${_notesCtrl.text}".
-    Ha già risposto a queste domande:
+    L'operatore controlla l'impianto ${_idCtrl.text}. Note: "${_notesCtrl.text}". Ha già risposto a:
     $alreadyAsked
-    Genera ESATTAMENTE 1 NUOVA domanda tecnica, DIVERSA dalle precedenti, per verificare altri dettagli critici.
-    RESTITUISCI SOLO LA DOMANDA, senza asterischi o numeri.
+    Genera 1 SOLA NUOVA domanda tecnica diversa dalle precedenti.
+    ATTENZIONE: NON SCRIVERE "Trovato nei documenti". SCRIVI SOLO IL TESTO DELLA DOMANDA PULITO.
     """;
 
     final response = await provider.callBackend(prompt);
-    String newQ = response.trim();
+    String newQ = response.replaceAll(RegExp(r'^\d+\.\s*|-\s*|\*'), '').trim();
 
     setState(() {
-      if(newQ.isNotEmpty) {
+      if(newQ.isNotEmpty && !newQ.toLowerCase().contains("trovato")) {
         aiQuestionsList.add(newQ);
         aiAnswersCtrls.add(TextEditingController());
       }

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:pdf/pdf.dart';                  // LIBRERIA PDF
+import 'package:pdf/widgets.dart' as pw;        // LIBRERIA PDF WIDGETS
+import 'package:printing/printing.dart';        // LIBRERIA DOWNLOAD STAMPA
 import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 import '../models/models.dart';
@@ -8,6 +11,50 @@ import 'report_detail_chat_screen.dart';
 
 class ReportsListScreen extends StatelessWidget {
   const ReportsListScreen({super.key});
+
+  // FUNZIONE PER CREARE E SCARICARE IL PDF VERO!
+  Future<void> _downloadRealPDF(BuildContext context, Report report) async {
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Generazione PDF in corso...')));
+    
+    final pdf = pw.Document();
+    
+    // Togliamo il markdown pesante (asterischi e cancelletti) per il PDF testuale pulito
+    final cleanText = report.aiSummary.replaceAll('**', '').replaceAll('##', '').replaceAll('#', '');
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(40),
+        build: (pw.Context context) {
+          return [
+            // INTESTAZIONE DEL PDF (Aziendale)
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text('FieldKit AI', style: pw.TextStyle(color: PdfColors.red800, fontSize: 24, fontWeight: pw.FontWeight.bold)),
+                pw.Text('DOCUMENTO UFFICIALE', style: const pw.TextStyle(color: PdfColors.grey600, fontSize: 14)),
+              ]
+            ),
+            pw.Divider(color: PdfColors.red800, thickness: 2),
+            pw.SizedBox(height: 20),
+            
+            // TITOLO E DATA
+            pw.Text(report.taskTitle, style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
+            pw.SizedBox(height: 8),
+            pw.Text('Generato il: ${report.date}', style: const pw.TextStyle(color: PdfColors.grey600, fontSize: 12)),
+            pw.SizedBox(height: 24),
+            
+            // CORPO DEL REPORT
+            pw.Text(cleanText, style: const pw.TextStyle(fontSize: 12, lineSpacing: 1.5)),
+          ];
+        },
+      ),
+    );
+
+    // Salva e fa partire il download nel browser/telefono
+    final String filename = '${report.taskTitle.replaceAll(' ', '_')}.pdf';
+    await Printing.sharePdf(bytes: await pdf.save(), filename: filename);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +93,6 @@ class ReportsListScreen extends StatelessWidget {
                               children: [
                                 Text(report.taskTitle, style: TextStyle(fontWeight: FontWeight.w800, fontSize: isDesktop ? 20 : 16, color: AppTheme.textDark)),
                                 const SizedBox(height: 8),
-                                // INTERLINEA SIMILE (height: 1.5) AGGIUNTA QUI
                                 Text('Generato il: ${report.date}\nStatus: Completato', style: TextStyle(color: AppTheme.textLight, fontSize: isDesktop ? 16 : 14, height: 1.5)),
                               ],
                             ),
@@ -62,7 +108,7 @@ class ReportsListScreen extends StatelessWidget {
                           ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16), backgroundColor: AppTheme.primary),
                             icon: const Icon(Icons.visibility, size: 20),
-                            label: const Text('Visualizza PDF'),
+                            label: const Text('Visualizza'),
                             onPressed: () => _showReportDetails(context, report),
                           ),
                           TextButton.icon(
@@ -106,14 +152,12 @@ class ReportsListScreen extends StatelessWidget {
                     const Icon(Icons.picture_as_pdf, color: AppTheme.primary),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: Text(
-                        report.taskTitle, 
-                        style: TextStyle(color: Colors.white, fontSize: isDesktop ? 20 : 16, fontWeight: FontWeight.bold)
-                      )
+                      child: Text(report.taskTitle, style: TextStyle(color: Colors.white, fontSize: isDesktop ? 20 : 16, fontWeight: FontWeight.bold))
                     ),
+                    // ORA QUESTO PULSANTE SCARICA IL PDF VERO!
                     IconButton(
                       icon: const Icon(Icons.download, color: Colors.white),
-                      onPressed: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Download avviato'))),
+                      onPressed: () => _downloadRealPDF(context, report),
                     ),
                     const SizedBox(width: 8),
                     IconButton(

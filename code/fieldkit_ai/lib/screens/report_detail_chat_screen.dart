@@ -59,8 +59,13 @@ class _ReportDetailChatScreenState extends State<ReportDetailChatScreen> {
     ${widget.report.aiSummary}
     --- FINE REPORT ---
     
-    Rispondi a questa domanda dell'utente seguendo le tue regole RAG:
+    Rispondi a questa domanda dell'utente:
     $userQuery
+    
+    REGOLE IMPERATIVE PER LA FONTE:
+    Alla fine di OGNI tua risposta, devi andare a capo due volte e scrivere ESATTAMENTE questo formato:
+    **Fonte:** [Nome File], [Capitolo/Sezione], Pagina [Numero]
+    Non usare altri colori, elenchi puntati o frasi diverse per indicare la fonte. Se la risposta viene dal report, scrivi "**Fonte:** Report Utente".
     """;
 
     final aiResponse = await provider.callBackend(promptUnito);
