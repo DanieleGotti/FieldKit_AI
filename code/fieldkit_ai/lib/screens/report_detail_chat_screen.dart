@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import '../providers/app_provider.dart'; 
 import '../models/models.dart';
 import '../theme/app_theme.dart';
@@ -16,14 +17,27 @@ class _ReportDetailChatScreenState extends State<ReportDetailChatScreen> {
   final _chatCtrl = TextEditingController();
   final List<ChatMessage> _messages = [];
   bool isAiTyping = false;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     _messages.add(ChatMessage(
-      text: 'Assistente AI attivo per il report dell\'impianto. Fai domande sul documento o sulle normative di settore.', 
+      text: 'Ciao! Sono l\'assistente AI di FieldKit.\nHo analizzato il report. Fammi qualsiasi domanda sulle **normative** o sui **dettagli tecnici** relativi all\'impianto scelto.', 
       isUser: false
     ));
+  }
+
+  void _scrollToBottom() {
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
   }
 
   void _sendMessage() async {
@@ -35,11 +49,10 @@ class _ReportDetailChatScreenState extends State<ReportDetailChatScreen> {
       _chatCtrl.clear();
       isAiTyping = true;
     });
+    _scrollToBottom();
 
     final provider = context.read<AppProvider>();
 
-    // Siccome le regole RAG severe ora sono sul server Render,
-    // a noi basta "allegare" il testo del report alla domanda dell'utente.
     final promptUnito = """
     Ecco il report appena compilato:
     --- INIZIO REPORT ---
@@ -50,89 +63,119 @@ class _ReportDetailChatScreenState extends State<ReportDetailChatScreen> {
     $userQuery
     """;
 
-    // Chiamiamo il nostro server Render!
     final aiResponse = await provider.callBackend(promptUnito);
 
     setState(() {
       isAiTyping = false;
       _messages.add(ChatMessage(text: aiResponse, isUser: false));
     });
+    _scrollToBottom();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Chat Assistente RAG')),
-      body: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            color: AppTheme.surface,
-            width: double.infinity,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(widget.report.taskTitle, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                const SizedBox(height: 6),
-                Text('Creato il: ${widget.report.date}', style: const TextStyle(color: AppTheme.textLight)),
-              ],
+    bool isDesktop = MediaQuery.of(context).size.width >= 800;
+
+    // Ritorna UN DIALOG TRASPARENTE, identico al Visualizza Report!
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: EdgeInsets.all(isDesktop ? 24 : 16),
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 900, maxHeight: 900),
+        decoration: BoxDecoration(color: AppTheme.background, borderRadius: BorderRadius.circular(12)),
+        child: Column(
+          children: [
+            // HEADER IDENTICO AL REPORT
+            Container(
+              padding: EdgeInsets.all(isDesktop ? 24 : 16),
+              decoration: const BoxDecoration(color: AppTheme.sidebarBg, borderRadius: BorderRadius.vertical(top: Radius.circular(12))),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Icon(Icons.auto_awesome, color: AppTheme.primary),
+                  const SizedBox(width: 12),
+                  const Expanded(child: Text('Assistente AI', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white),
+                    onPressed: () => Navigator.pop(context),
+                  )
+                ],
+              ),
             ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                final msg = _messages[index];
-                return Align(
-                  alignment: msg.isUser ? Alignment.centerRight : Alignment.centerLeft,
-                  child: Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.all(12),
-                    constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.8),
-                    decoration: BoxDecoration(
-                      color: msg.isUser ? AppTheme.primary.withOpacity(0.1) : AppTheme.surface,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppTheme.divider),
+            
+            // CORPO DELLA CHAT
+            Expanded(
+              child: ListView.builder(
+                controller: _scrollController,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                itemCount: _messages.length,
+                itemBuilder: (context, index) {
+                  final msg = _messages[index];
+                  return Align(
+                    alignment: msg.isUser ? Alignment.centerRight : Alignment.centerLeft,
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                      constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * (isDesktop ? 0.6 : 0.8)),
+                      decoration: BoxDecoration(
+                        color: msg.isUser ? AppTheme.primary : Colors.white,
+                        borderRadius: BorderRadius.only(
+                          topLeft: const Radius.circular(20),
+                          topRight: const Radius.circular(20),
+                          bottomLeft: Radius.circular(msg.isUser ? 20 : 0),
+                          bottomRight: Radius.circular(msg.isUser ? 0 : 20),
+                        ),
+                        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 5))],
+                      ),
+                      child: MarkdownBody(
+                        data: msg.text,
+                        styleSheet: MarkdownStyleSheet(
+                          p: TextStyle(color: msg.isUser ? Colors.white : AppTheme.textDark, fontSize: 16, height: 1.5),
+                          strong: TextStyle(fontWeight: FontWeight.w900, color: msg.isUser ? Colors.white : AppTheme.primaryDark),
+                        ),
+                      ),
                     ),
-                    child: Text(
-                      msg.text, 
-                      style: TextStyle(color: msg.isUser ? AppTheme.primary : AppTheme.textDark, fontSize: 15)
-                    ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
-          ),
-          if (isAiTyping)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8.0),
-              child: Center(child: CircularProgressIndicator(color: AppTheme.primary)),
-            ),
-          Container(
-            padding: const EdgeInsets.all(8),
-            color: AppTheme.surface,
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _chatCtrl,
-                    decoration: const InputDecoration(
-                      hintText: 'Fai una domanda sul report...',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 16)
+            
+            if (isAiTyping)
+              const Padding(padding: EdgeInsets.symmetric(vertical: 8.0), child: Center(child: CircularProgressIndicator(color: AppTheme.primary))),
+              
+            // INPUT IN BASSO
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5))]),
+              child: SafeArea(
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _chatCtrl,
+                        decoration: InputDecoration(
+                          hintText: 'Chiedi dettagli',
+                          filled: true,
+                          fillColor: AppTheme.background,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20)
+                        ),
+                        onSubmitted: (_) => _sendMessage(),
+                      ),
                     ),
-                    onSubmitted: (_) => _sendMessage(),
-                  ),
+                    const SizedBox(width: 16),
+                    FloatingActionButton(
+                      backgroundColor: AppTheme.primary,
+                      elevation: 0,
+                      onPressed: _sendMessage,
+                      child: const Icon(Icons.send, color: Colors.white),
+                    )
+                  ],
                 ),
-                IconButton(
-                  icon: const Icon(Icons.send, color: AppTheme.primary), 
-                  onPressed: _sendMessage
-                ),
-              ],
-            ),
-          )
-        ],
+              ),
+            )
+          ],
+        ),
       ),
     );
   }

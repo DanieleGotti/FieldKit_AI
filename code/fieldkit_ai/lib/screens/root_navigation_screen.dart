@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
+import '../theme/app_theme.dart';
 import 'reports_list_screen.dart';
 import 'data_collection_screen.dart';
 import 'live_support_screen.dart';
@@ -18,45 +19,69 @@ class _RootNavigationScreenState extends State<RootNavigationScreen> {
   @override
   void initState() {
     super.initState();
-    int initialPage = context.read<AppProvider>().currentTabIndex;
-    _pageController = PageController(initialPage: initialPage);
-  }
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
+    _pageController = PageController(initialPage: context.read<AppProvider>().currentTabIndex);
   }
 
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<AppProvider>();
+    bool isDesktop = MediaQuery.of(context).size.width >= 800;
 
     if (_pageController.hasClients && _pageController.page?.round() != provider.currentTabIndex) {
-      _pageController.animateToPage(
-        provider.currentTabIndex,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
+      _pageController.jumpToPage(provider.currentTabIndex);
     }
 
+    final pages = const [DataCollectionScreen(), ReportsListScreen(), LiveSupportScreen()];
+
     return Scaffold(
-      body: PageView(
-        controller: _pageController,
-        onPageChanged: (index) => context.read<AppProvider>().setTab(index),
-        children: const [
-          DataCollectionScreen(), // Tab 0
-          ReportsListScreen(),   // Tab 1 
-          LiveSupportScreen(),   // Tab 2
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (isDesktop)
+            NavigationRail(
+              backgroundColor: AppTheme.sidebarBg,
+              indicatorColor: AppTheme.primary,
+              selectedIndex: provider.currentTabIndex,
+              onDestinationSelected: (index) => context.read<AppProvider>().setTab(index),
+              unselectedIconTheme: const IconThemeData(color: Colors.white54, opacity: 1),
+              selectedIconTheme: const IconThemeData(color: Colors.white, size: 30),
+              unselectedLabelTextStyle: const TextStyle(color: Colors.white54),
+              selectedLabelTextStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              extended: true,
+              leading: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 32),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Image.asset('lib/assets/icons/logo.png', width: 36, height: 36, errorBuilder: (context, error, stackTrace) => const Icon(Icons.shield, color: AppTheme.primary, size: 32)),
+                    const SizedBox(width: 12),
+                    Text('FieldKit AI', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white, fontSize: 22)),
+                  ],
+                ),
+              ),
+              destinations: const [
+                NavigationRailDestination(icon: Icon(Icons.camera_alt_outlined), selectedIcon: Icon(Icons.camera_alt), label: Text('Ispezione')),
+                NavigationRailDestination(icon: Icon(Icons.folder_outlined), selectedIcon: Icon(Icons.folder_shared), label: Text('Archivio')),
+                NavigationRailDestination(icon: Icon(Icons.headset_mic_outlined), selectedIcon: Icon(Icons.headset_mic), label: Text('Live')),
+              ],
+            ),
+          
+          Expanded(
+            child: PageView(
+              controller: _pageController, 
+              physics: const NeverScrollableScrollPhysics(), 
+              children: pages
+            )
+          ),
         ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
+      bottomNavigationBar: isDesktop ? null : BottomNavigationBar(
         currentIndex: provider.currentTabIndex,
         onTap: (index) => context.read<AppProvider>().setTab(index),
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.camera_alt), label: 'Ispeziona'),
+          BottomNavigationBarItem(icon: Icon(Icons.camera_alt), label: 'Ispezione'),
           BottomNavigationBarItem(icon: Icon(Icons.folder_shared), label: 'Archivio'),
-          BottomNavigationBarItem(icon: Icon(Icons.phone), label: 'Live'),
+          BottomNavigationBarItem(icon: Icon(Icons.headset_mic), label: 'Live'),
         ],
       ),
     );

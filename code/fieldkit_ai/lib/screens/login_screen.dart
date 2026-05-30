@@ -21,27 +21,43 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.surface,
+      backgroundColor: AppTheme.background,
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(32.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Icon(Icons.shield, size: 100, color: AppTheme.primary),
-              const SizedBox(height: 16),
-              Text('FieldKit AI', textAlign: TextAlign.center, style: Theme.of(context).textTheme.displayLarge?.copyWith(color: AppTheme.primary, fontSize: 32)),
-              const SizedBox(height: 8),
-              const Text('Portale Operativo - Web App', textAlign: TextAlign.center),
-              const SizedBox(height: 48),
-              TextField(
-                controller: _nameCtrl, 
-                decoration: const InputDecoration(labelText: 'Inserisci il tuo Nome e Cognome', border: OutlineInputBorder(), prefixIcon: Icon(Icons.person))
+          padding: const EdgeInsets.all(24.0),
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 450),
+            child: Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 48.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Il tuo VERO logo inserito col percorso giusto
+                    Center(
+                      child: Image.asset('lib/assets/icons/logo.png', width: 100, height: 100, errorBuilder: (context, error, stackTrace) => const Icon(Icons.shield, size: 100, color: AppTheme.primary)),
+                    ),
+                    const SizedBox(height: 24),
+                    Text('FieldKit AI', textAlign: TextAlign.center, style: Theme.of(context).textTheme.displayLarge?.copyWith(color: AppTheme.primary, fontSize: 32)),
+                    const SizedBox(height: 8),
+                    const Text('Portale operativo', textAlign: TextAlign.center, style: TextStyle(color: AppTheme.textLight, fontSize: 16)),
+                    const SizedBox(height: 48),
+                    TextField(
+                      controller: _nameCtrl, 
+                      decoration: const InputDecoration(labelText: 'Utente', prefixIcon: Icon(Icons.person))
+                    ),
+                    const SizedBox(height: 32),
+                    ElevatedButton(
+                      onPressed: _doLogin, 
+                      child: const Text('Entra', style: TextStyle(fontWeight: FontWeight.bold))
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 24),
-              ElevatedButton(onPressed: _doLogin, child: const Text('ENTRA NEL SISTEMA', style: TextStyle(fontWeight: FontWeight.bold))),
-            ],
+            ),
           ),
         ),
       ),

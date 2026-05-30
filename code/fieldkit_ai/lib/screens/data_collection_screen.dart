@@ -10,260 +10,294 @@ class DataCollectionScreen extends StatefulWidget {
   State<DataCollectionScreen> createState() => _DataCollectionScreenState();
 }
 
-class _DataCollectionScreenState extends State<DataCollectionScreen> {
+class _DataCollectionScreenState extends State<DataCollectionScreen> with AutomaticKeepAliveClientMixin {
   final _idCtrl = TextEditingController();
   final _notesCtrl = TextEditingController();
-  final _aiResponseCtrl = TextEditingController();
-
-  bool isPhotoGreen = false;
-  bool isVideoGreen = false;
-  bool isAudioGreen = false;
-
+  
   bool isLoadingAiQuestions = false;
-  String aiQuestions = ""; // Domande dinamiche generate da Gemini
+  List<String> aiQuestionsList = [];
+  List<TextEditingController> aiAnswersCtrls = [];
   bool isReportReady = false;
 
-  // IL TUO TEMPLATE DEL REPORT INCORPORATO DIRETTAMENTE NEL CODICE
-  static const String reportTemplate = """
-  REPORT DI MANUTENZIONE TECNICA E CONFORMITA'
+  @override
+  bool get wantKeepAlive => true; 
 
-  Codice Report: [ID_GENERATO_DA_AI]
-  Operatore Responsabile: [NOME_OPERATORE]
-  Data Ispezione: [DATA_OGGI]
-
-  1. ANAGRAFICA IMPIANTO
-  - Matricola Impianto: [MATRICOLA]
-  - Tipologia Impianto: [TIPO_IMPIANTO]
-  - Ubicazione: [UBICAZIONE_CLIENTE]
-  - Normativa di Riferimento applicata: [NORMATIVA_RIFERIMENTO]
-
-  2. STATO DI CONSERVAZIONE E ANALISI VISIVA
-  - Stato Generale: [CONFORME / NON CONFORME / DA ATTENZIONARE]
-  - Analisi dei Componenti Critici:
-    * Componente A: [Stato e usura rilevati]
-    * Componente B: [Stato e usura rilevati]
-  - Dettagli da Analisi Multimediale: [Descrizione dettagliata]
-
-  3. QUESTIONARIO DI VERIFICA AI
-  - Verifica A: [Risposta fornita all'AI]
-  - Verifica B: [Risposta fornita all'AI]
-
-  4. AZIONI CORRETTIVE E RACCOMANDAZIONI
-  - Interventi Immediati: [Sì/No + Descrizione]
-  - Prossimo Controllo: [Data consigliata]
-
-  5. DICHIARAZIONE DI RESPONSABILITA'
-  Il sottoscritto [NOME_OPERATORE] dichiara sotto la propria responsabilita' che l'impianto in oggetto e' stato sottoposto alle verifiche sopra descritte in conformita' alle norme vigenti.
-  Firma Elettronica: [FIRMA_OPERATORE]
-  """;
-
-  // Flash temporaneo del pulsante multimediale
-  void _triggerFlashButton(String type) {
-    setState(() {
-      if (type == 'photo') isPhotoGreen = true;
-      if (type == 'video') isVideoGreen = true;
-      if (type == 'audio') isAudioGreen = true;
-    });
-
-    Future.delayed(const Duration(milliseconds: 1500), () {
-      if (mounted) {
-        setState(() {
-          if (type == 'photo') isPhotoGreen = false;
-          if (type == 'video') isVideoGreen = false;
-          if (type == 'audio') isAudioGreen = false;
-        });
-      }
-    });
+  void _showComingSoon() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Funzionalità in fase di sviluppo. Disponibile a breve!'), backgroundColor: AppTheme.textDark, behavior: SnackBarBehavior.floating)
+    );
   }
 
-  // STEP 1: Richiede all'AI di formulare domande basandosi sugli input per completare il documento a norma
-  void _getAiMissingQuestions() async {
+  // Genera le prime 3 domande
+  void _getInitialAiQuestions() async {
     if (_idCtrl.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Inserisci prima la Matricola Impianto.'))
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Inserisci la matricola dell\'impianto.')));
       return;
     }
 
-    setState(() {
-      isLoadingAiQuestions = true;
-      aiQuestions = "";
-    });
+    setState(() { isLoadingAiQuestions = true; aiQuestionsList.clear(); aiAnswersCtrls.clear(); });
 
     final provider = context.read<AppProvider>();
-    
     final prompt = """
-    L'operatore sta controllando l'impianto matricola ${_idCtrl.text}.
-    Note inserite dall'operatore: "${_notesCtrl.text}".
-    
-    In base alle norme tecniche e di sicurezza degli impianti industriali,
-    individua le informazioni o i controlli critici che l'operatore potrebbe aver dimenticato o tralasciato di inserire in questo contesto.
-    Genera al massimo 5 domande tecniche molto brevi e mirate per forzare l'operatore a verificare questi dettagli critici.
-    Evita spiegazioni prolisse, restituisci solo le domande numerate in italiano.
+    L'operatore sta controllando l'impianto matricola ${_idCtrl.text}. Note: "${_notesCtrl.text}".
+    Individua le informazioni critiche mancanti o non dichiarate.
+    Genera ESATTAMENTE 3 domande tecniche mirate per l'operatore.
+    RESTITUISCI SOLO LE DOMANDE, una per riga, senza usare asterischi o elenchi puntati.
     """;
 
     final response = await provider.callBackend(prompt);
+    List<String> rawQuestions = response.split('\n').where((q) => q.trim().isNotEmpty).toList();
 
     setState(() {
+      aiQuestionsList = rawQuestions;
+      aiAnswersCtrls = List.generate(rawQuestions.length, (index) => TextEditingController());
+      isReportReady = true;
       isLoadingAiQuestions = false;
-      aiQuestions = response;
-      isReportReady = true; // Sblocca la possibilità di generare il report finale
     });
   }
 
-  // STEP 2: Invia il template del report assieme a tutti i dati raccolti all'AI per la compilazione
-  void _generateFinalReport() async {
-    setState(() {
-      isLoadingAiQuestions = true;
-    });
+  // Aggiunge 1 singola domanda nuova
+  void _addOneMoreQuestion() async {
+    setState(() => isLoadingAiQuestions = true);
+    final provider = context.read<AppProvider>();
+    
+    // Passiamo le domande attuali in modo che non le ripeta
+    String alreadyAsked = aiQuestionsList.map((e) => "- $e").join('\n');
 
+    final prompt = """
+    L'operatore sta controllando l'impianto matricola ${_idCtrl.text}. Note: "${_notesCtrl.text}".
+    Ha già risposto a queste domande:
+    $alreadyAsked
+    Genera ESATTAMENTE 1 NUOVA domanda tecnica, DIVERSA dalle precedenti, per verificare altri dettagli critici.
+    RESTITUISCI SOLO LA DOMANDA, senza asterischi o numeri.
+    """;
+
+    final response = await provider.callBackend(prompt);
+    String newQ = response.trim();
+
+    setState(() {
+      if(newQ.isNotEmpty) {
+        aiQuestionsList.add(newQ);
+        aiAnswersCtrls.add(TextEditingController());
+      }
+      isLoadingAiQuestions = false;
+    });
+  }
+
+  void _generateFinalReport() async {
+    setState(() => isLoadingAiQuestions = true);
     final provider = context.read<AppProvider>();
 
-    // Qui il codice inserisce e invia il template e i dati estratti direttamente alle API di Gemini
+    String aiQA = "";
+    for (int i = 0; i < aiQuestionsList.length; i++) {
+      aiQA += "Domanda: ${aiQuestionsList[i]}\nRisposta operatore: ${aiAnswersCtrls[i].text}\n\n";
+    }
+
     final prompt = """
-    Compila e restituisci questo report in FORMATO TESTO SEMPLICE. 
-    ASSOLUTAMENTE NON USARE IL MARKDOWN: non usare MAI asterischi (**) o cancelletti (#).
-    Usa solo lettere maiuscole per i titoli e vai a capo per separare i paragrafi.
-    Riempi i campi tra parentesi quadre [...] con i dati raccolti.
+    Compila questo report usando formattazione MARKDOWN (usa ** per il grassetto).
+    Riempi i campi [...]. NON INVENTARE DATI.
+    Matricola: ${_idCtrl.text}
+    Note: ${_notesCtrl.text}
+    Risposte AI: $aiQA
+    Data odierna: Oggi
+    Operatore: ${provider.loggedUser}
 
-    DATI DA INSERIRE:
-    - Matricola Impianto: ${_idCtrl.text}
-    - Dettagli operatore: ${_notesCtrl.text}
-    - Risposte alle domande aggiuntive AI: ${_aiResponseCtrl.text}
-    - Data odierna: 16 Maggio 2026
-    - Nome operatore: ${provider.loggedUser}
+    TEMPLATE:
+    # REPORT DI MANUTENZIONE TECNICA E CONFORMITÀ
+    **Codice Report:** [GENERARE UN ID CASUALE]
+    **Operatore Responsabile:** [NOME_OPERATORE]
+    **Data Ispezione:** [DATA_OGGI]
 
-    TEMPLATE DA COMPILARE RIGOROSAMENTE:
-    $reportTemplate
+    ## 1. ANAGRAFICA IMPIANTO E STATO GENERALE
+    - **Matricola Impianto:** [MATRICOLA]
+    - **Stato Generale Rilevato:** [SINTESI DELLO STATO]
+    - **Dettagli analitici:** [INSERISCI LE NOTE INIZIALI QUI]
+
+    ## 2. VERIFICHE AGGIUNTIVE
+    [INSERISCI LE DOMANDE DELL'AI E LE RISPOSTE DELL'OPERATORE IN MODO DISCORSIVO E PROFESSIONALE]
+
+    ## 3. RACCOMANDAZIONI E AZIONI CORRETTIVE
+    - **Interventi Suggeriti:** [Sì/No + Descrizione]
     """;
 
     final reportContent = await provider.callBackend(prompt);
+    provider.addGeneratedReport("Report: ${_idCtrl.text}", reportContent);
 
-    provider.addGeneratedReport("Report Impianto ${_idCtrl.text}", reportContent);
-
-    // Reset completo dello stato della scheda
     _idCtrl.clear();
     _notesCtrl.clear();
-    _aiResponseCtrl.clear();
     setState(() {
-      aiQuestions = "";
+      aiQuestionsList.clear();
+      aiAnswersCtrls.clear();
       isReportReady = false;
       isLoadingAiQuestions = false;
     });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Report generato correttamente e salvato nell\'Archivio.'))
-    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Ispezione Guidata')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Acquisizione Multimediale', style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _mediaBtn(Icons.camera_alt, 'Foto', isPhotoGreen, () => _triggerFlashButton('photo')),
-                _mediaBtn(Icons.videocam, 'Video', isVideoGreen, () => _triggerFlashButton('video')),
-                _mediaBtn(Icons.mic, 'Audio', isAudioGreen, () => _triggerFlashButton('audio')),
-              ],
-            ),
-            const Divider(height: 48, color: AppTheme.divider),
-            Text('Dati di Ispezione', style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _idCtrl, 
-              decoration: const InputDecoration(labelText: 'Matricola Impianto', border: OutlineInputBorder(), filled: true, fillColor: AppTheme.surface)
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _notesCtrl, 
-              maxLines: 3, 
-              decoration: const InputDecoration(labelText: 'Dettagli scritti dall\'operatore...', border: OutlineInputBorder(), filled: true, fillColor: AppTheme.surface)
-            ),
-            const SizedBox(height: 24),
+    super.build(context); 
+    bool isDesktop = MediaQuery.of(context).size.width >= 800;
 
-            if (isLoadingAiQuestions)
-              const Center(child: CircularProgressIndicator(color: AppTheme.primary))
-            else if (aiQuestions.isNotEmpty) ...[
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(color: AppTheme.warningBg, borderRadius: BorderRadius.circular(12)),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    return Scaffold(
+      appBar: AppBar(title: const Text('Ispezione', style: TextStyle(fontWeight: FontWeight.bold))),
+      body: Column(
+        children: [
+          Expanded(
+            child: Center(
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 800),
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
                   children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.auto_awesome, color: AppTheme.warning),
-                        const SizedBox(width: 8),
-                        Text('Questionario Dinamico AI:', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 16, color: AppTheme.warning)),
-                      ],
+                    
+                    // PRIMA CARD: Dati Principali
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(32.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildSectionTitle(context, 'Dati impianto'), 
+                            const SizedBox(height: 24),
+                            TextField(controller: _idCtrl, decoration: const InputDecoration(labelText: 'Matricola', prefixIcon: Icon(Icons.qr_code))),
+                            const SizedBox(height: 24),
+                            TextField(
+                              controller: _notesCtrl, 
+                              minLines: 4, maxLines: 15,
+                              keyboardType: TextInputType.multiline,
+                              decoration: const InputDecoration(labelText: 'Aggiungi dettagli', prefixIcon: Padding(padding: EdgeInsets.only(bottom: 80), child: Icon(Icons.edit_note)))
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: 8),
-                    Text(aiQuestions, style: const TextStyle(fontWeight: FontWeight.w500)),
+                    const SizedBox(height: 32),
+                    
+                    // SECONDA CARD: Acquisizione Multimediale
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 32.0, horizontal: 16.0),
+                        child: Column(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                              child: _buildSectionTitle(context, 'Acquisizione multimediale'),
+                            ),
+                            const SizedBox(height: 24),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                _mediaBtn(Icons.camera_alt, 'Foto', isDesktop),
+                                _mediaBtn(Icons.videocam, 'Video', isDesktop),
+                                _mediaBtn(Icons.mic, 'Audio', isDesktop),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 48),
+
+                    // CARDS DEL QUESTIONARIO AI
+                    if (aiQuestionsList.isNotEmpty) ...[
+                      _buildSectionTitle(context, 'Verifica con l\'AI', icon: Icons.auto_awesome, color: AppTheme.warning),
+                      const SizedBox(height: 16), // SPAZIETTO AGGIUNTO!
+                      
+                      ...List.generate(aiQuestionsList.length, (index) {
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 16.0),
+                          child: Padding(
+                            padding: const EdgeInsets.all(24.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Domanda ${index + 1}: ${aiQuestionsList[index]}', 
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: isDesktop ? 16 : 14, color: AppTheme.primaryDark, height: 1.5)
+                                ),
+                                const SizedBox(height: 16),
+                                TextField(
+                                  controller: aiAnswersCtrls[index], 
+                                  minLines: 2, maxLines: 10,
+                                  keyboardType: TextInputType.multiline,
+                                  // RIMOSSO filled: true E Colors.white PER EREDITARE IL GRIGIO-AZZURRO DEL TEMA!
+                                  decoration: const InputDecoration(labelText: 'Inserisci la tua risposta')
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }),
+
+                      const SizedBox(height: 16),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: isLoadingAiQuestions 
+                          ? const CircularProgressIndicator()
+                          : ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary),
+                              onPressed: _addOneMoreQuestion, 
+                              icon: const Icon(Icons.add), 
+                              label: const Text('Genera un\'altra domanda')
+                            ),
+                      )
+                    ] else if (isLoadingAiQuestions) ...[
+                       const Center(child: CircularProgressIndicator())
+                    ],
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _aiResponseCtrl,
-                maxLines: 2,
-                decoration: const InputDecoration(
-                  labelText: 'Rispondi alle domande sollevate dall\'AI...',
-                  border: OutlineInputBorder(),
-                  filled: true,
-                  fillColor: AppTheme.surface
+            ),
+          ),
+          
+          // BOTTONE IN BASSO
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: AppTheme.surface,
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5))]
+            ),
+            child: SafeArea( 
+              child: Center(
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 800),
+                  width: double.infinity,
+                  height: 64,
+                  child: !isReportReady 
+                    ? ElevatedButton.icon(icon: const Icon(Icons.analytics), label: const Text('Analizza e genera domande'), onPressed: _getInitialAiQuestions)
+                    : ElevatedButton.icon(style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary), icon: const Icon(Icons.done_all), label: const Text('Genera il report'), onPressed: _generateFinalReport),
                 ),
               ),
-            ],
-
-            const SizedBox(height: 32),
-            
-            SizedBox(
-              width: double.infinity,
-              child: !isReportReady 
-                ? ElevatedButton.icon(
-                    icon: const Icon(Icons.analytics),
-                    label: const Text('ANALIZZA INPUT & GENERA DOMANDE'),
-                    onPressed: _getAiMissingQuestions,
-                  )
-                : ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(backgroundColor: AppTheme.success),
-                    icon: const Icon(Icons.done_all),
-                    label: const Text('ELABORA E GENERA REPORT FINALE'),
-                    onPressed: _generateFinalReport,
-                  ),
-            )
-          ],
-        ),
+            ),
+          )
+        ],
       ),
     );
   }
 
-  Widget _mediaBtn(IconData icon, String label, bool isGreen, VoidCallback onTap) {
-    Color color = isGreen ? AppTheme.success : AppTheme.textDark;
+  // TITOLO CON DIMENSIONI ALLINEATE A QUELLE DI "Report Impianto..."
+  Widget _buildSectionTitle(BuildContext context, String title, {IconData? icon, Color color = AppTheme.textDark}) {
+    bool isDesktop = MediaQuery.of(context).size.width >= 800;
+    return Row(
+      children: [
+        if (icon != null) ...[Icon(icon, color: color), const SizedBox(width: 8)],
+        Text(title, style: TextStyle(fontSize: isDesktop ? 20 : 16, fontWeight: FontWeight.w800, color: color)),
+      ],
+    );
+  }
+
+  Widget _mediaBtn(IconData icon, String label, bool isDesktop) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: _showComingSoon,
       child: Column(
         children: [
           Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: isGreen ? AppTheme.success.withOpacity(0.15) : AppTheme.mediaButtonBg, 
-              shape: BoxShape.circle,
-              border: isGreen ? Border.all(color: AppTheme.success, width: 2) : null,
-            ),
-            child: Icon(icon, size: 32, color: color),
+            padding: const EdgeInsets.all(24),
+            decoration: const BoxDecoration(color: AppTheme.mediaButtonBg, shape: BoxShape.circle),
+            child: Icon(icon, size: 32, color: AppTheme.textDark),
           ),
           const SizedBox(height: 8),
-          Text(label, style: TextStyle(fontWeight: FontWeight.bold, color: color)),
+          Text(label, style: TextStyle(fontWeight: FontWeight.bold, fontSize: isDesktop ? 16 : 14, color: AppTheme.textDark)),
         ],
       ),
     );

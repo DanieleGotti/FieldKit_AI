@@ -3,11 +3,12 @@ const MANIFEST = 'flutter-app-manifest';
 const TEMP = 'flutter-temp-cache';
 const CACHE_NAME = 'flutter-app-cache';
 
-const RESOURCES = {"assets/AssetManifest.bin": "d9187cd421edb343618e25464924aa54",
-"assets/AssetManifest.bin.json": "b1246f7aa131216ea17e2058fa2654c9",
-"assets/AssetManifest.json": "2284438b3179ce446eb28949e9de7c85",
+const RESOURCES = {"assets/AssetManifest.bin": "0e5648cf01fa9f9934214408627a751c",
+"assets/AssetManifest.bin.json": "aa8b8dd73d63ebef6157db691d487366",
+"assets/AssetManifest.json": "c5a2c67c84021101c82d679d2b6f1300",
 "assets/FontManifest.json": "7b2a36307916a9721811788013e65289",
-"assets/fonts/MaterialIcons-Regular.otf": "58020c614166598227a755601c853e48",
+"assets/fonts/MaterialIcons-Regular.otf": "ccedcbe187d89302cc24c04f12ffb6a4",
+"assets/lib/assets/icons/logo.png": "6bc2e929bde86e4e01ab5e6bd0e9a084",
 "assets/lib/assets/pdfs/D.P.R.-151-2011-Antincendio.pdf": "23abe7c67a5a90927ddf383ea9825e73",
 "assets/lib/assets/pdfs/l.VMA_USO_MANUTENZIONE_R1-2.pdf": "2abaa361bea80dcd778a6c420515ae5e",
 "assets/lib/assets/pdfs/ManualeOperativoTrident-K-XP-Plus-rev2.pdf": "782115b984774f740a55b5196ed6270a",
@@ -18,7 +19,7 @@ const RESOURCES = {"assets/AssetManifest.bin": "d9187cd421edb343618e25464924aa54
 "assets/lib/assets/pdfs/TRIDENT-K-manuale-installazione-rev2.2.pdf": "8552fc44861ad9bec967976ee353148d",
 "assets/lib/assets/pdfs/TRIDENT-XP-PLUS-manuale-installazione-rev2.3.pdf": "07c8043f0d1a08c34795b538df3402b0",
 "assets/lib/assets/pdfs/TRIDENT-XP-V3-MANUALE-USO-E-MANUTENZ.pdf": "46639f14dc97a6a440abc11e0bd5b782",
-"assets/NOTICES": "1e2a035ccdd3273eecdb183e8410fa05",
+"assets/NOTICES": "1cf02ed12aab704d7783ccd3a6d9a445",
 "assets/shaders/ink_sparkle.frag": "ecc85a2e95f5e9f53123dcaf8cb9b6ce",
 "canvaskit/canvaskit.js": "738255d00768497e86aa4ca510cce1e1",
 "canvaskit/canvaskit.js.symbols": "74a84c23f5ada42fe063514c587968c6",
@@ -32,14 +33,14 @@ const RESOURCES = {"assets/AssetManifest.bin": "d9187cd421edb343618e25464924aa54
 "canvaskit/skwasm.worker.js": "bfb704a6c714a75da9ef320991e88b03",
 "favicon.png": "a0413576829de4d56699f15f03ebab29",
 "flutter.js": "383e55f7f3cce5be08fcf1f3881f585c",
-"flutter_bootstrap.js": "f813683a96e0d5aab6ef3a9de2321a96",
+"flutter_bootstrap.js": "0bf353061250c187688e0d58a0d6980b",
 "icons/Icon-192.png": "f6444026f9a60bd8450fe6896eecc5c5",
 "icons/Icon-512.png": "0bb1a9a84ec8f4c3d59fb204866e732b",
 "icons/Icon-maskable-192.png": "f6444026f9a60bd8450fe6896eecc5c5",
 "icons/Icon-maskable-512.png": "0bb1a9a84ec8f4c3d59fb204866e732b",
 "index.html": "90cbe7b1d448a5dab74b06d228b22c9f",
 "/": "90cbe7b1d448a5dab74b06d228b22c9f",
-"main.dart.js": "c8c172596b01f04c5af444cb169c1118",
+"main.dart.js": "137624ac7dab1410d509200ffa30ec8d",
 "manifest.json": "0fd6995c16aaaacd1a35df90f14ffd48",
 "version.json": "aabd2638583c7d2d6033056937f6eef2"};
 // The application shell files that are downloaded before a service worker can

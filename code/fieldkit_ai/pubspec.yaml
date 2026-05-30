@@ -12,6 +12,7 @@ dependencies:
   provider: ^6.1.2
   google_fonts: ^6.2.1
   http: ^1.2.1
+  flutter_markdown: ^0.6.18
 
 dev_dependencies:
   flutter_test:
@@ -23,6 +24,7 @@ flutter:
   uses-material-design: true
   assets:
     - lib/assets/pdfs/
+    - lib/assets/icons/
 
 flutter_icons:
   android: "launcher_icon"
