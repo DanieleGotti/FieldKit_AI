@@ -36,13 +36,14 @@ class _DataCollectionScreenState extends State<DataCollectionScreen> with Automa
     setState(() { isLoadingAiQuestions = true; aiQuestionsList.clear(); aiAnswersCtrls.clear(); });
     final provider = context.read<AppProvider>();
     
-    // BLOCCO ANTI-CAZZATE
+    // PROMPT BLINDATO: Niente "Fonte", controllo stronzate
     final prompt = """
     L'operatore sta controllando l'impianto matricola ${_idCtrl.text}. Note: "${_notesCtrl.text}".
     
-    REGOLA 1 TASSATIVA: Se la matricola o le note sono palesemente parole a caso (es. "asdasd"), lettere senza senso o del tutto non pertinenti a un ispezione tecnica, DEVI BLOCCARE TUTTO e rispondere SOLO ED ESATTAMENTE con la parola: ERRORE_DATI
+    REGOLA 1: Se la matricola o le note sono palesemente parole a caso (es. "asdasd"), lettere senza senso o non pertinenti a un ispezione, DEVI BLOCCARE TUTTO e rispondere SOLO con: ERRORE_DATI
     
-    REGOLA 2: Se i dati hanno senso, genera 3 o 4 domande tecniche mirate per l'operatore. NON SCRIVERE "Trovato nei documenti". SCRIVI SOLO IL TESTO DELLE DOMANDE. Una per riga.
+    REGOLA 2: Se i dati hanno senso, genera 3 o 4 domande tecniche mirate. 
+    REGOLA ASSOLUTA: NON SCRIVERE MAI LA PAROLA "Fonte", "Trovato in" o riferimenti. SCRIVI SOLO LE DOMANDE. Una per riga. Nessun asterisco.
     """;
 
     final response = await provider.callBackend(prompt);
@@ -53,7 +54,10 @@ class _DataCollectionScreenState extends State<DataCollectionScreen> with Automa
       return;
     }
 
-    List<String> rawQuestions = response.split('\n').map((q) => q.replaceAll(RegExp(r'^\d+\.\s*|-\s*|\*'), '').trim()).where((q) => q.isNotEmpty).toList();
+    List<String> rawQuestions = response.split('\n')
+        .map((q) => q.replaceAll(RegExp(r'^\d+\.\s*|-\s*|\*'), '').trim())
+        .where((q) => q.isNotEmpty && !q.toLowerCase().contains("fonte")) // Filtro anti-allucinazione aggiuntivo
+        .toList();
 
     setState(() {
       aiQuestionsList = rawQuestions;
@@ -71,14 +75,15 @@ class _DataCollectionScreenState extends State<DataCollectionScreen> with Automa
     final prompt = """
     L'operatore controlla l'impianto ${_idCtrl.text}. Note: "${_notesCtrl.text}". Ha già risposto a:
     $alreadyAsked
-    Genera 1 SOLA NUOVA domanda tecnica diversa dalle precedenti.
+    Genera 1 SOLA NUOVA domanda tecnica diversa.
+    VIETATO SCRIVERE "Fonte". Fornisci SOLO la domanda.
     """;
 
     final response = await provider.callBackend(prompt);
     String newQ = response.replaceAll(RegExp(r'^\d+\.\s*|-\s*|\*'), '').trim();
 
     setState(() {
-      if(newQ.isNotEmpty && !newQ.toLowerCase().contains("trovato")) {
+      if(newQ.isNotEmpty && !newQ.toLowerCase().contains("fonte")) {
         aiQuestionsList.add(newQ);
         aiAnswersCtrls.add(TextEditingController());
       }
@@ -90,27 +95,39 @@ class _DataCollectionScreenState extends State<DataCollectionScreen> with Automa
     setState(() => isLoadingAiQuestions = true);
     final provider = context.read<AppProvider>();
 
-    String aiQA = "";
+    // DIVISIONE INTELLIGENTE: Domande risposte vs Domande vuote
+    String answeredQA = "";
+    String unansweredQuestions = "";
+    
     for (int i = 0; i < aiQuestionsList.length; i++) {
       String ans = aiAnswersCtrls[i].text.trim();
-      if (ans.isEmpty) ans = "[DATI MANCANTI - Nessuna risposta fornita dall'operatore]";
-      aiQA += "- ${aiQuestionsList[i]}\n  Riscontro: $ans\n";
+      if (ans.isNotEmpty) {
+        answeredQA += "- ${aiQuestionsList[i]}\n  Riscontro: $ans\n";
+      } else {
+        unansweredQuestions += "- ${aiQuestionsList[i]}\n";
+      }
     }
 
-    // BLOCCO ANTI INVENZIONI
+    // Se non ha risposto a niente ed è vuoto, lo blocchiamo
+    if (answeredQA.isEmpty) answeredQA = "Nessuna verifica aggiuntiva effettuata durante l'ispezione.";
+    if (unansweredQuestions.isEmpty) unansweredQuestions = "Nessuna raccomandazione specifica aggiuntiva.";
+
     final prompt = """
-    Agisci come un Ingegnere Manutentore Senior. Redigi il report tecnico finale dell'ispezione usando formattazione MARKDOWN (usa solo **grassetto** ed elenchi puntati).
+    Agisci come un Ingegnere Manutentore Senior. Redigi il report tecnico finale dell'ispezione usando formattazione MARKDOWN (usa solo **grassetto**, NESSUN CANCELLETTO #).
 
     Dati da fondere:
     Matricola: ${_idCtrl.text}
     Note rilevate inizialmente: ${_notesCtrl.text}
-    Dettagli emersi in corso d'opera: 
-    $aiQA
     
-    REGOLA TASSATIVA SUI DATI MANCANTI: 
-    Se c'è scritto che non è stata fornita una risposta, NON DEVI ASSOLUTAMENTE INVENTARLA. Devi dichiarare nel report esplicitamente che "La verifica non è stata effettuata per mancanza di dati". Non presumere che l'impianto sia a norma se manca la risposta.
+    Dati Verificati (da mettere nel Punto 2): 
+    $answeredQA
+    
+    Verifiche Saltate (da mettere nel Punto 3 come azioni future da compiere):
+    $unansweredQuestions
 
-    Segui ESATTAMENTE questa struttura compilando i campi in modo narrativo impersonale:
+    REGOLA TASSATIVA: Non dire MAI che l'operatore non ha risposto a una domanda o ha saltato dei passaggi. Le "Verifiche Saltate" devono essere inserite nel Punto 3 trasformandole elegantemente in "Si raccomanda per il futuro di verificare..." o "Prossimi step suggeriti: ...".
+
+    Segui ESATTAMENTE questa struttura compilando i campi in modo narrativo impersonale. (NON usare simboli # per i titoli):
 
     **REPORT DI MANUTENZIONE TECNICA E CONFORMITÀ**
     **Tecnico Responsabile:** ${provider.loggedUser}
@@ -121,10 +138,10 @@ class _DataCollectionScreenState extends State<DataCollectionScreen> with Automa
     [Fondi le note iniziali in un'introduzione discorsiva]
 
     **2. ESITO DELLE VERIFICHE TECNICHE APPROFONDITE**
-    [Descrivi i risultati emersi dai dettagli. Se un dato manca, dichiaralo assente.]
+    [Descrivi i risultati basandoti SOLO sui "Dati Verificati"]
 
     **3. RACCOMANDAZIONI E INTERVENTI SUGGERITI**
-    [Sintesi finale sulle azioni da compiere]
+    [Inserisci qui le "Verifiche Saltate" trasformandole in consigli per interventi futuri, oltre ad altre raccomandazioni necessarie]
     """;
 
     final reportContent = await provider.callBackend(prompt);
@@ -220,7 +237,7 @@ class _DataCollectionScreenState extends State<DataCollectionScreen> with Automa
                                   controller: aiAnswersCtrls[index], 
                                   minLines: 2, maxLines: 10,
                                   keyboardType: TextInputType.multiline,
-                                  decoration: const InputDecoration(labelText: 'Inserisci la tua risposta (lascia vuoto se non sai)')
+                                  decoration: const InputDecoration(labelText: 'Risposta (lascia vuoto per rimandare a future ispezioni)')
                                 ),
                               ],
                             ),
