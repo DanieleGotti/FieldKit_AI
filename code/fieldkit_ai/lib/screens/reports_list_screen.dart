@@ -12,7 +12,17 @@ import 'report_detail_chat_screen.dart';
 class ReportsListScreen extends StatelessWidget {
   const ReportsListScreen({super.key});
 
-  // MOTORE DI GENERAZIONE PDF PROFESSIONALE
+  // PULIZIA TESTO: Converte apostrofi e virgolette strane dell'AI nei formati ASCII base per evitare i quadratini neri
+  String _sanitizeForPdf(String text) {
+    return text
+        .replaceAll('’', "'")
+        .replaceAll('‘', "'")
+        .replaceAll('“', '"')
+        .replaceAll('”', '"')
+        .replaceAll('–', '-')
+        .replaceAll('—', '-');
+  }
+
   Future<Uint8List> _generatePdfBytes(Report report) async {
     final pdf = pw.Document();
 
@@ -20,7 +30,8 @@ class ReportsListScreen extends StatelessWidget {
       if (line.trim().isEmpty) return pw.SizedBox(height: 8);
       
       bool isBullet = line.trimLeft().startsWith('-');
-      String cleanLine = isBullet ? line.trimLeft().substring(1).trim() : line;
+      // Applichiamo la sanitizzazione a ogni riga!
+      String cleanLine = _sanitizeForPdf(isBullet ? line.trimLeft().substring(1).trim() : line.trim());
 
       final spans = <pw.InlineSpan>[];
       final parts = cleanLine.split('**');
@@ -83,15 +94,18 @@ class ReportsListScreen extends StatelessWidget {
       context: context,
       builder: (context) => Dialog(
         backgroundColor: Colors.transparent,
-        insetPadding: EdgeInsets.all(isDesktop ? 24 : 16), 
+        // SU MOBILE PADDING ZERO COSI' IL PDF SI VEDE BELLO GRANDE
+        insetPadding: EdgeInsets.all(isDesktop ? 24 : 0), 
         child: Container(
+          width: double.infinity,
+          height: double.infinity,
           constraints: const BoxConstraints(maxWidth: 900, maxHeight: 900),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(isDesktop ? 12 : 0)),
           child: Column(
             children: [
               Container(
                 padding: EdgeInsets.all(isDesktop ? 20 : 16),
-                decoration: const BoxDecoration(color: AppTheme.sidebarBg, borderRadius: BorderRadius.vertical(top: Radius.circular(12))),
+                decoration: BoxDecoration(color: AppTheme.sidebarBg, borderRadius: BorderRadius.vertical(top: Radius.circular(isDesktop ? 12 : 0))),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -105,20 +119,18 @@ class ReportsListScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              // VERO PDF A4 IN ANTEPRIMA NELL'APP!
               Expanded(
                 child: ClipRRect(
-                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
+                  borderRadius: BorderRadius.vertical(bottom: Radius.circular(isDesktop ? 12 : 0)),
                   child: PdfPreview(
                     build: (format) => _generatePdfBytes(report),
-                    allowPrinting: true, // Lasciamo l'icona di stampa
-                    allowSharing: false, // Disabilitiamo la condivisione base
+                    allowPrinting: true, 
+                    allowSharing: false, 
                     canChangeOrientation: false,
                     canChangePageFormat: false,
-                    canDebug: false, // RIMUOVE L'INTERRUTTORE!
+                    canDebug: false, 
                     pdfFileName: '${report.taskTitle.replaceAll(' ', '_')}.pdf',
                     actions: [
-                      // AGGIUNGIAMO IL NOSTRO PULSANTE DOWNLOAD
                       PdfPreviewAction(
                         icon: const Icon(Icons.download, color: Colors.white),
                         onPressed: (context, build, pageFormat) async {

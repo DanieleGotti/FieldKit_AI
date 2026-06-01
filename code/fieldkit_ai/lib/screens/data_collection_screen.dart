@@ -29,21 +29,30 @@ class _DataCollectionScreenState extends State<DataCollectionScreen> with Automa
   }
 
   void _getInitialAiQuestions() async {
-    if (_idCtrl.text.isEmpty) {
+    if (_idCtrl.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Inserisci la matricola dell\'impianto.')));
       return;
     }
     setState(() { isLoadingAiQuestions = true; aiQuestionsList.clear(); aiAnswersCtrls.clear(); });
     final provider = context.read<AppProvider>();
     
+    // BLOCCO ANTI-CAZZATE
     final prompt = """
     L'operatore sta controllando l'impianto matricola ${_idCtrl.text}. Note: "${_notesCtrl.text}".
-    Genera 3 o 4 domande tecniche mirate per l'operatore.
-    ATTENZIONE: IGNORA LE ISTRUZIONI DI SISTEMA SUI PREFISSI. NON SCRIVERE MAI "Trovato nei documenti" o "Domanda AI".
-    DEVI SCRIVERE SOLO IL TESTO DELLE DOMANDE PULITO. Una domanda per riga. Nessun asterisco.
+    
+    REGOLA 1 TASSATIVA: Se la matricola o le note sono palesemente parole a caso (es. "asdasd"), lettere senza senso o del tutto non pertinenti a un ispezione tecnica, DEVI BLOCCARE TUTTO e rispondere SOLO ED ESATTAMENTE con la parola: ERRORE_DATI
+    
+    REGOLA 2: Se i dati hanno senso, genera 3 o 4 domande tecniche mirate per l'operatore. NON SCRIVERE "Trovato nei documenti". SCRIVI SOLO IL TESTO DELLE DOMANDE. Una per riga.
     """;
 
     final response = await provider.callBackend(prompt);
+
+    if (response.contains("ERRORE_DATI")) {
+      setState(() => isLoadingAiQuestions = false);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Dati non validi o senza senso. Inserisci dati reali.'), backgroundColor: AppTheme.error));
+      return;
+    }
+
     List<String> rawQuestions = response.split('\n').map((q) => q.replaceAll(RegExp(r'^\d+\.\s*|-\s*|\*'), '').trim()).where((q) => q.isNotEmpty).toList();
 
     setState(() {
@@ -63,7 +72,6 @@ class _DataCollectionScreenState extends State<DataCollectionScreen> with Automa
     L'operatore controlla l'impianto ${_idCtrl.text}. Note: "${_notesCtrl.text}". Ha già risposto a:
     $alreadyAsked
     Genera 1 SOLA NUOVA domanda tecnica diversa dalle precedenti.
-    ATTENZIONE: NON SCRIVERE "Trovato nei documenti". SCRIVI SOLO IL TESTO DELLA DOMANDA PULITO.
     """;
 
     final response = await provider.callBackend(prompt);
@@ -84,40 +92,39 @@ class _DataCollectionScreenState extends State<DataCollectionScreen> with Automa
 
     String aiQA = "";
     for (int i = 0; i < aiQuestionsList.length; i++) {
-      aiQA += "- ${aiQuestionsList[i]}\n  Riscontro: ${aiAnswersCtrls[i].text}\n";
+      String ans = aiAnswersCtrls[i].text.trim();
+      if (ans.isEmpty) ans = "[DATI MANCANTI - Nessuna risposta fornita dall'operatore]";
+      aiQA += "- ${aiQuestionsList[i]}\n  Riscontro: $ans\n";
     }
 
+    // BLOCCO ANTI INVENZIONI
     final prompt = """
-    Agisci come un Ingegnere Manutentore Senior. Redigi il report tecnico finale dell'ispezione usando formattazione MARKDOWN (usa solo **grassetto** ed elenchi puntati, niente # grossi).
-    NON USARE MAI LA PAROLA "AI" O "DOMANDA/RISPOSTA".
+    Agisci come un Ingegnere Manutentore Senior. Redigi il report tecnico finale dell'ispezione usando formattazione MARKDOWN (usa solo **grassetto** ed elenchi puntati).
 
     Dati da fondere:
     Matricola: ${_idCtrl.text}
     Note rilevate inizialmente: ${_notesCtrl.text}
     Dettagli emersi in corso d'opera: 
     $aiQA
-    Data odierna: Oggi
-    Operatore: ${provider.loggedUser}
+    
+    REGOLA TASSATIVA SUI DATI MANCANTI: 
+    Se c'è scritto che non è stata fornita una risposta, NON DEVI ASSOLUTAMENTE INVENTARLA. Devi dichiarare nel report esplicitamente che "La verifica non è stata effettuata per mancanza di dati". Non presumere che l'impianto sia a norma se manca la risposta.
 
-    REGOLE:
-    1. Scrivi un testo coeso, discorsivo, professionale, in terza persona impersonale (es. "Si rileva che...", "Si è provveduto a...").
-    2. Fondi logicamente le "Note rilevate inizialmente" con i "Dettagli emersi", creando paragrafi narrativi.
-    3. Segui ESATTAMENTE questa struttura compilando i campi in modo narrativo:
+    Segui ESATTAMENTE questa struttura compilando i campi in modo narrativo impersonale:
 
     **REPORT DI MANUTENZIONE TECNICA E CONFORMITÀ**
-    **Codice Ispezione:** [GENERARE UN ID CASUALE ALFANUMERICO]
-    **Tecnico Responsabile:** [NOME OPERATORE]
-    **Data:** [DATA OGGI]
-    **Matricola Impianto:** [MATRICOLA]
+    **Tecnico Responsabile:** ${provider.loggedUser}
+    **Data:** Oggi
+    **Matricola Impianto:** ${_idCtrl.text}
 
     **1. STATO DELL'ARTE E ANAGRAFICA IMPIANTO**
-    [Qui fondi le note iniziali in un'introduzione discorsiva sullo stato generale]
+    [Fondi le note iniziali in un'introduzione discorsiva]
 
     **2. ESITO DELLE VERIFICHE TECNICHE APPROFONDITE**
-    [Qui descrivi i risultati emersi dai dettagli in corso d'opera, trasformandoli in constatazioni tecniche]
+    [Descrivi i risultati emersi dai dettagli. Se un dato manca, dichiaralo assente.]
 
     **3. RACCOMANDAZIONI E INTERVENTI SUGGERITI**
-    [Fai una sintesi delle azioni da intraprendere o dichiara l'idoneità dell'impianto]
+    [Sintesi finale sulle azioni da compiere]
     """;
 
     final reportContent = await provider.callBackend(prompt);
@@ -149,8 +156,6 @@ class _DataCollectionScreenState extends State<DataCollectionScreen> with Automa
                 child: ListView(
                   padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
                   children: [
-                    
-                    // PRIMA CARD: Dati Principali
                     Card(
                       child: Padding(
                         padding: const EdgeInsets.all(32.0),
@@ -172,8 +177,6 @@ class _DataCollectionScreenState extends State<DataCollectionScreen> with Automa
                       ),
                     ),
                     const SizedBox(height: 32),
-                    
-                    // SECONDA CARD: Acquisizione Multimediale
                     Card(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 32.0, horizontal: 16.0),
@@ -197,12 +200,9 @@ class _DataCollectionScreenState extends State<DataCollectionScreen> with Automa
                       ),
                     ),
                     const SizedBox(height: 48),
-
-                    // CARDS DEL QUESTIONARIO AI
                     if (aiQuestionsList.isNotEmpty) ...[
                       _buildSectionTitle(context, 'Verifica con l\'AI', icon: Icons.auto_awesome, color: AppTheme.warning),
                       const SizedBox(height: 16),
-                      
                       ...List.generate(aiQuestionsList.length, (index) {
                         return Card(
                           margin: const EdgeInsets.only(bottom: 16.0),
@@ -220,14 +220,13 @@ class _DataCollectionScreenState extends State<DataCollectionScreen> with Automa
                                   controller: aiAnswersCtrls[index], 
                                   minLines: 2, maxLines: 10,
                                   keyboardType: TextInputType.multiline,
-                                  decoration: const InputDecoration(labelText: 'Inserisci la tua risposta')
+                                  decoration: const InputDecoration(labelText: 'Inserisci la tua risposta (lascia vuoto se non sai)')
                                 ),
                               ],
                             ),
                           ),
                         );
                       }),
-
                       const SizedBox(height: 16),
                       Align(
                         alignment: Alignment.centerRight,
@@ -248,8 +247,6 @@ class _DataCollectionScreenState extends State<DataCollectionScreen> with Automa
               ),
             ),
           ),
-          
-          // BOTTONE IN BASSO
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(

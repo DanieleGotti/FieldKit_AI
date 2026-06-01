@@ -2,31 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  // --- CONTROLLO DIMENSIONI FONT DINAMICO ---
-  // Cambiando questi valori modificherai i font in tutta l'app istantaneamente.
   static double titleSize(BuildContext context) => MediaQuery.of(context).size.width >= 800 ? 16 : 16;
-  static double bodySize(BuildContext context) => MediaQuery.of(context).size.width >= 800 ? 13 : 13;
-  static double smallSize(BuildContext context) => MediaQuery.of(context).size.width >= 800 ? 12 : 12;
+  static double bodySize(BuildContext context) => MediaQuery.of(context).size.width >= 800 ? 11 : 11;
+  static double smallSize(BuildContext context) => MediaQuery.of(context).size.width >= 800 ? 10 : 10;
 
-  // Colori Brand e Struttura
   static const Color primary = Color(0xFFC62828); 
   static const Color primaryDark = Color(0xFF8E0000); 
   static const Color background = Color(0xFFF4F7FE); 
   static const Color surface = Colors.white;
   static const Color sidebarBg = Color(0xFF1E1E2D); 
   
-  // Colori Testo
   static const Color textDark = Color(0xFF2B3674);
   static const Color textLight = Color(0xFFA3AED0);
   static const Color textWhite = Colors.white;
   
-  // Colori di Stato
   static const Color success = Color(0xFF05CD99);
   static const Color warning = Color(0xFFF57C00); 
   static const Color warningBg = Color(0xFFFFF3E0); 
   static const Color error = Color(0xFFEE5D50);
 
-  // Colori Specifici UI
   static const Color cameraBackground = Colors.black;
   static const Color divider = Color(0xFFE2E8F0);
   static const Color mediaButtonBg = Color(0xFFEDF2F7);
@@ -48,12 +42,13 @@ class AppTheme {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         margin: EdgeInsets.zero,
       ),
+      // --- FIX DEL COLORE ROSINO NELLO SCROLL ---
       appBarTheme: const AppBarTheme(
         backgroundColor: surface,
         foregroundColor: textDark,
         elevation: 0,
-        scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.transparent,
+        scrolledUnderElevation: 0, // Toglie l'ombra di scroll
+        surfaceTintColor: Colors.white, // FORZA IL BIANCO ASSOLUTO: impedisce al Material 3 di colorare di rosso/rosa la barra
         centerTitle: false,
         iconTheme: IconThemeData(color: primary),
       ),
@@ -64,7 +59,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
           elevation: 0,
-          textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14), // Font ridotto per pulsanti
+          textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14), 
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -72,7 +67,7 @@ class AppTheme {
         fillColor: background,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: primary, width: 2)),
-        labelStyle: const TextStyle(color: textLight, fontSize: 14), // Font ridotto per input
+        labelStyle: const TextStyle(color: textLight, fontSize: 14), 
       ),
     );
   }
