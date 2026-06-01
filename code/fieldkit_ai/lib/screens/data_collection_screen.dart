@@ -28,7 +28,6 @@ class _DataCollectionScreenState extends State<DataCollectionScreen> with Automa
     );
   }
 
-  // Genera le prime 3/4 domande
   void _getInitialAiQuestions() async {
     if (_idCtrl.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Inserisci la matricola dell\'impianto.')));
@@ -37,7 +36,6 @@ class _DataCollectionScreenState extends State<DataCollectionScreen> with Automa
     setState(() { isLoadingAiQuestions = true; aiQuestionsList.clear(); aiAnswersCtrls.clear(); });
     final provider = context.read<AppProvider>();
     
-    // PROMPT BLINDATO PER EVITARE L'ERRORE DELLA FOTO
     final prompt = """
     L'operatore sta controllando l'impianto matricola ${_idCtrl.text}. Note: "${_notesCtrl.text}".
     Genera 3 o 4 domande tecniche mirate per l'operatore.
@@ -46,7 +44,6 @@ class _DataCollectionScreenState extends State<DataCollectionScreen> with Automa
     """;
 
     final response = await provider.callBackend(prompt);
-    // Pulizia rigorosa delle stringhe ricevute
     List<String> rawQuestions = response.split('\n').map((q) => q.replaceAll(RegExp(r'^\d+\.\s*|-\s*|\*'), '').trim()).where((q) => q.isNotEmpty).toList();
 
     setState(() {
@@ -57,7 +54,6 @@ class _DataCollectionScreenState extends State<DataCollectionScreen> with Automa
     });
   }
 
-  // Aggiunge 1 singola domanda nuova
   void _addOneMoreQuestion() async {
     setState(() => isLoadingAiQuestions = true);
     final provider = context.read<AppProvider>();
@@ -88,34 +84,40 @@ class _DataCollectionScreenState extends State<DataCollectionScreen> with Automa
 
     String aiQA = "";
     for (int i = 0; i < aiQuestionsList.length; i++) {
-      aiQA += "Domanda: ${aiQuestionsList[i]}\nRisposta operatore: ${aiAnswersCtrls[i].text}\n\n";
+      aiQA += "- ${aiQuestionsList[i]}\n  Riscontro: ${aiAnswersCtrls[i].text}\n";
     }
 
     final prompt = """
-    Compila questo report usando formattazione MARKDOWN (usa ** per il grassetto).
-    Riempi i campi [...]. NON INVENTARE DATI.
+    Agisci come un Ingegnere Manutentore Senior. Redigi il report tecnico finale dell'ispezione usando formattazione MARKDOWN (usa solo **grassetto** ed elenchi puntati, niente # grossi).
+    NON USARE MAI LA PAROLA "AI" O "DOMANDA/RISPOSTA".
+
+    Dati da fondere:
     Matricola: ${_idCtrl.text}
-    Note: ${_notesCtrl.text}
-    Risposte AI: $aiQA
+    Note rilevate inizialmente: ${_notesCtrl.text}
+    Dettagli emersi in corso d'opera: 
+    $aiQA
     Data odierna: Oggi
     Operatore: ${provider.loggedUser}
 
-    TEMPLATE:
-    # REPORT DI MANUTENZIONE TECNICA E CONFORMITÀ
-    **Codice Report:** [GENERARE UN ID CASUALE]
-    **Operatore Responsabile:** [NOME_OPERATORE]
-    **Data Ispezione:** [DATA_OGGI]
+    REGOLE:
+    1. Scrivi un testo coeso, discorsivo, professionale, in terza persona impersonale (es. "Si rileva che...", "Si è provveduto a...").
+    2. Fondi logicamente le "Note rilevate inizialmente" con i "Dettagli emersi", creando paragrafi narrativi.
+    3. Segui ESATTAMENTE questa struttura compilando i campi in modo narrativo:
 
-    ## 1. ANAGRAFICA IMPIANTO E STATO GENERALE
-    - **Matricola Impianto:** [MATRICOLA]
-    - **Stato Generale Rilevato:** [SINTESI DELLO STATO]
-    - **Dettagli analitici:** [INSERISCI LE NOTE INIZIALI QUI]
+    **REPORT DI MANUTENZIONE TECNICA E CONFORMITÀ**
+    **Codice Ispezione:** [GENERARE UN ID CASUALE ALFANUMERICO]
+    **Tecnico Responsabile:** [NOME OPERATORE]
+    **Data:** [DATA OGGI]
+    **Matricola Impianto:** [MATRICOLA]
 
-    ## 2. VERIFICHE AGGIUNTIVE
-    [INSERISCI LE DOMANDE DELL'AI E LE RISPOSTE DELL'OPERATORE IN MODO DISCORSIVO E PROFESSIONALE]
+    **1. STATO DELL'ARTE E ANAGRAFICA IMPIANTO**
+    [Qui fondi le note iniziali in un'introduzione discorsiva sullo stato generale]
 
-    ## 3. RACCOMANDAZIONI E AZIONI CORRETTIVE
-    - **Interventi Suggeriti:** [Sì/No + Descrizione]
+    **2. ESITO DELLE VERIFICHE TECNICHE APPROFONDITE**
+    [Qui descrivi i risultati emersi dai dettagli in corso d'opera, trasformandoli in constatazioni tecniche]
+
+    **3. RACCOMANDAZIONI E INTERVENTI SUGGERITI**
+    [Fai una sintesi delle azioni da intraprendere o dichiara l'idoneità dell'impianto]
     """;
 
     final reportContent = await provider.callBackend(prompt);
@@ -137,7 +139,7 @@ class _DataCollectionScreenState extends State<DataCollectionScreen> with Automa
     bool isDesktop = MediaQuery.of(context).size.width >= 800;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Ispezione', style: TextStyle(fontWeight: FontWeight.bold))),
+      appBar: AppBar(title: Text('Ispezione', style: TextStyle(fontWeight: FontWeight.bold, fontSize: AppTheme.titleSize(context)))),
       body: Column(
         children: [
           Expanded(
@@ -185,9 +187,9 @@ class _DataCollectionScreenState extends State<DataCollectionScreen> with Automa
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: [
-                                _mediaBtn(Icons.camera_alt, 'Foto', isDesktop),
-                                _mediaBtn(Icons.videocam, 'Video', isDesktop),
-                                _mediaBtn(Icons.mic, 'Audio', isDesktop),
+                                _mediaBtn(context, Icons.camera_alt, 'Foto', isDesktop),
+                                _mediaBtn(context, Icons.videocam, 'Video', isDesktop),
+                                _mediaBtn(context, Icons.mic, 'Audio', isDesktop),
                               ],
                             ),
                           ],
@@ -199,7 +201,7 @@ class _DataCollectionScreenState extends State<DataCollectionScreen> with Automa
                     // CARDS DEL QUESTIONARIO AI
                     if (aiQuestionsList.isNotEmpty) ...[
                       _buildSectionTitle(context, 'Verifica con l\'AI', icon: Icons.auto_awesome, color: AppTheme.warning),
-                      const SizedBox(height: 16), // SPAZIETTO AGGIUNTO!
+                      const SizedBox(height: 16),
                       
                       ...List.generate(aiQuestionsList.length, (index) {
                         return Card(
@@ -211,14 +213,13 @@ class _DataCollectionScreenState extends State<DataCollectionScreen> with Automa
                               children: [
                                 Text(
                                   'Domanda ${index + 1}: ${aiQuestionsList[index]}', 
-                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: isDesktop ? 16 : 14, color: AppTheme.primaryDark, height: 1.5)
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: AppTheme.bodySize(context), color: AppTheme.primaryDark, height: 1.5)
                                 ),
                                 const SizedBox(height: 16),
                                 TextField(
                                   controller: aiAnswersCtrls[index], 
                                   minLines: 2, maxLines: 10,
                                   keyboardType: TextInputType.multiline,
-                                  // RIMOSSO filled: true E Colors.white PER EREDITARE IL GRIGIO-AZZURRO DEL TEMA!
                                   decoration: const InputDecoration(labelText: 'Inserisci la tua risposta')
                                 ),
                               ],
@@ -273,29 +274,27 @@ class _DataCollectionScreenState extends State<DataCollectionScreen> with Automa
     );
   }
 
-  // TITOLO CON DIMENSIONI ALLINEATE A QUELLE DI "Report Impianto..."
   Widget _buildSectionTitle(BuildContext context, String title, {IconData? icon, Color color = AppTheme.textDark}) {
-    bool isDesktop = MediaQuery.of(context).size.width >= 800;
     return Row(
       children: [
-        if (icon != null) ...[Icon(icon, color: color), const SizedBox(width: 8)],
-        Text(title, style: TextStyle(fontSize: isDesktop ? 20 : 16, fontWeight: FontWeight.w800, color: color)),
+        if (icon != null) ...[Icon(icon, color: color, size: AppTheme.titleSize(context) + 4), const SizedBox(width: 8)],
+        Text(title, style: TextStyle(fontSize: AppTheme.titleSize(context), fontWeight: FontWeight.w800, color: color)),
       ],
     );
   }
 
-  Widget _mediaBtn(IconData icon, String label, bool isDesktop) {
+  Widget _mediaBtn(BuildContext context, IconData icon, String label, bool isDesktop) {
     return GestureDetector(
       onTap: _showComingSoon,
       child: Column(
         children: [
           Container(
-            padding: const EdgeInsets.all(24),
+            padding: EdgeInsets.all(isDesktop ? 20 : 16),
             decoration: const BoxDecoration(color: AppTheme.mediaButtonBg, shape: BoxShape.circle),
-            child: Icon(icon, size: 32, color: AppTheme.textDark),
+            child: Icon(icon, size: 28, color: AppTheme.textDark),
           ),
           const SizedBox(height: 8),
-          Text(label, style: TextStyle(fontWeight: FontWeight.bold, fontSize: isDesktop ? 16 : 14, color: AppTheme.textDark)),
+          Text(label, style: TextStyle(fontWeight: FontWeight.bold, fontSize: AppTheme.bodySize(context), color: AppTheme.textDark)),
         ],
       ),
     );

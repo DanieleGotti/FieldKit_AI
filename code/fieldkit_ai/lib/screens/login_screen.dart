@@ -36,14 +36,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Il tuo VERO logo inserito col percorso giusto
                     Center(
-                      child: Image.asset('lib/assets/icons/logo.png', width: 100, height: 100, errorBuilder: (context, error, stackTrace) => const Icon(Icons.shield, size: 100, color: AppTheme.primary)),
+                      child: Image.asset('lib/assets/icons/logo.png', width: 100, height: 100, errorBuilder: (context, error, stackTrace) => const Icon(Icons.shield, size: 80, color: AppTheme.primary)),
                     ),
                     const SizedBox(height: 24),
-                    Text('FieldKit AI', textAlign: TextAlign.center, style: Theme.of(context).textTheme.displayLarge?.copyWith(color: AppTheme.primary, fontSize: 32)),
+                    Text('FieldKit AI', textAlign: TextAlign.center, style: Theme.of(context).textTheme.displayLarge?.copyWith(color: AppTheme.primary, fontSize: 28)),
                     const SizedBox(height: 8),
-                    const Text('Portale operativo', textAlign: TextAlign.center, style: TextStyle(color: AppTheme.textLight, fontSize: 16)),
+                    Text('Portale operativo', textAlign: TextAlign.center, style: TextStyle(color: AppTheme.textLight, fontSize: AppTheme.bodySize(context))),
                     const SizedBox(height: 48),
                     TextField(
                       controller: _nameCtrl, 

@@ -1,9 +1,9 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:pdf/pdf.dart';                  // LIBRERIA PDF
-import 'package:pdf/widgets.dart' as pw;        // LIBRERIA PDF WIDGETS
-import 'package:printing/printing.dart';        // LIBRERIA DOWNLOAD STAMPA
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 import '../models/models.dart';
@@ -12,48 +12,132 @@ import 'report_detail_chat_screen.dart';
 class ReportsListScreen extends StatelessWidget {
   const ReportsListScreen({super.key});
 
-  // FUNZIONE PER CREARE E SCARICARE IL PDF VERO!
-  Future<void> _downloadRealPDF(BuildContext context, Report report) async {
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Generazione PDF in corso...')));
-    
+  // MOTORE DI GENERAZIONE PDF PROFESSIONALE
+  Future<Uint8List> _generatePdfBytes(Report report) async {
     final pdf = pw.Document();
-    
-    // Togliamo il markdown pesante (asterischi e cancelletti) per il PDF testuale pulito
-    final cleanText = report.aiSummary.replaceAll('**', '').replaceAll('##', '').replaceAll('#', '');
+
+    pw.Widget parseLine(String line) {
+      if (line.trim().isEmpty) return pw.SizedBox(height: 8);
+      
+      bool isBullet = line.trimLeft().startsWith('-');
+      String cleanLine = isBullet ? line.trimLeft().substring(1).trim() : line;
+
+      final spans = <pw.InlineSpan>[];
+      final parts = cleanLine.split('**');
+      for (int i = 0; i < parts.length; i++) {
+        if (i % 2 != 0) { 
+          spans.add(pw.TextSpan(text: parts[i], style: pw.TextStyle(fontWeight: pw.FontWeight.bold)));
+        } else {
+          spans.add(pw.TextSpan(text: parts[i]));
+        }
+      }
+
+      pw.Widget textWidget = pw.RichText(text: pw.TextSpan(children: spans, style: const pw.TextStyle(fontSize: 11, color: PdfColors.black, lineSpacing: 1.5)));
+
+      if (isBullet) {
+        return pw.Padding(
+          padding: const pw.EdgeInsets.only(left: 15, bottom: 4, top: 4),
+          child: pw.Row(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text('• ', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 11)),
+              pw.Expanded(child: textWidget),
+            ]
+          )
+        );
+      }
+      return pw.Padding(padding: const pw.EdgeInsets.only(bottom: 6), child: textWidget);
+    }
 
     pdf.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
-        margin: const pw.EdgeInsets.all(40),
-        build: (pw.Context context) {
-          return [
-            // INTESTAZIONE DEL PDF (Aziendale)
+        margin: const pw.EdgeInsets.all(50),
+        header: (context) => pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
-                pw.Text('FieldKit AI', style: pw.TextStyle(color: PdfColors.red800, fontSize: 24, fontWeight: pw.FontWeight.bold)),
-                pw.Text('DOCUMENTO UFFICIALE', style: const pw.TextStyle(color: PdfColors.grey600, fontSize: 14)),
+                pw.Text('FIELDKIT AI', style: pw.TextStyle(color: PdfColors.red800, fontSize: 20, fontWeight: pw.FontWeight.bold)),
+                pw.Text('DOCUMENTO DI ISPEZIONE', style: const pw.TextStyle(color: PdfColors.grey600, fontSize: 10)),
               ]
             ),
-            pw.Divider(color: PdfColors.red800, thickness: 2),
+            pw.Divider(color: PdfColors.red800, thickness: 1.5),
             pw.SizedBox(height: 20),
-            
-            // TITOLO E DATA
-            pw.Text(report.taskTitle, style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
-            pw.SizedBox(height: 8),
-            pw.Text('Generato il: ${report.date}', style: const pw.TextStyle(color: PdfColors.grey600, fontSize: 12)),
-            pw.SizedBox(height: 24),
-            
-            // CORPO DEL REPORT
-            pw.Text(cleanText, style: const pw.TextStyle(fontSize: 12, lineSpacing: 1.5)),
-          ];
+          ]
+        ),
+        build: (pw.Context context) {
+          return report.aiSummary.split('\n').map((line) => parseLine(line)).toList();
         },
       ),
     );
 
-    // Salva e fa partire il download nel browser/telefono
-    final String filename = '${report.taskTitle.replaceAll(' ', '_')}.pdf';
-    await Printing.sharePdf(bytes: await pdf.save(), filename: filename);
+    return pdf.save();
+  }
+
+  void _showReportDetails(BuildContext context, Report report) {
+    bool isDesktop = MediaQuery.of(context).size.width >= 800;
+    
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.all(isDesktop ? 24 : 16), 
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 900, maxHeight: 900),
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+          child: Column(
+            children: [
+              Container(
+                padding: EdgeInsets.all(isDesktop ? 20 : 16),
+                decoration: const BoxDecoration(color: AppTheme.sidebarBg, borderRadius: BorderRadius.vertical(top: Radius.circular(12))),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Icon(Icons.picture_as_pdf, color: AppTheme.primary),
+                    const SizedBox(width: 12),
+                    Expanded(child: Text(report.taskTitle, style: TextStyle(color: Colors.white, fontSize: AppTheme.titleSize(context), fontWeight: FontWeight.bold))),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white),
+                      onPressed: () => Navigator.pop(context),
+                    )
+                  ],
+                ),
+              ),
+              // VERO PDF A4 IN ANTEPRIMA NELL'APP!
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
+                  child: PdfPreview(
+                    build: (format) => _generatePdfBytes(report),
+                    allowPrinting: true, // Lasciamo l'icona di stampa
+                    allowSharing: false, // Disabilitiamo la condivisione base
+                    canChangeOrientation: false,
+                    canChangePageFormat: false,
+                    canDebug: false, // RIMUOVE L'INTERRUTTORE!
+                    pdfFileName: '${report.taskTitle.replaceAll(' ', '_')}.pdf',
+                    actions: [
+                      // AGGIUNGIAMO IL NOSTRO PULSANTE DOWNLOAD
+                      PdfPreviewAction(
+                        icon: const Icon(Icons.download, color: Colors.white),
+                        onPressed: (context, build, pageFormat) async {
+                          final bytes = await build(pageFormat);
+                          await Printing.sharePdf(
+                            bytes: bytes, 
+                            filename: '${report.taskTitle.replaceAll(' ', '_')}.pdf'
+                          );
+                        },
+                      )
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -62,7 +146,7 @@ class ReportsListScreen extends StatelessWidget {
     bool isDesktop = MediaQuery.of(context).size.width >= 800;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Archivio', style: TextStyle(fontWeight: FontWeight.bold))),
+      appBar: AppBar(title: Text('Archivio', style: TextStyle(fontWeight: FontWeight.bold, fontSize: AppTheme.titleSize(context)))),
       body: Center(
         child: Container(
           constraints: const BoxConstraints(maxWidth: 800),
@@ -91,9 +175,9 @@ class ReportsListScreen extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(report.taskTitle, style: TextStyle(fontWeight: FontWeight.w800, fontSize: isDesktop ? 20 : 16, color: AppTheme.textDark)),
+                                Text(report.taskTitle, style: TextStyle(fontWeight: FontWeight.w800, fontSize: AppTheme.titleSize(context), color: AppTheme.textDark)),
                                 const SizedBox(height: 8),
-                                Text('Generato il: ${report.date}\nStatus: Completato', style: TextStyle(color: AppTheme.textLight, fontSize: isDesktop ? 16 : 14, height: 1.5)),
+                                Text('Generato il: ${report.date}\nStatus: Completato', style: TextStyle(color: AppTheme.textLight, fontSize: AppTheme.bodySize(context), height: 1.5)),
                               ],
                             ),
                           ),
@@ -108,13 +192,13 @@ class ReportsListScreen extends StatelessWidget {
                           ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16), backgroundColor: AppTheme.primary),
                             icon: const Icon(Icons.visibility, size: 20),
-                            label: const Text('Visualizza'),
+                            label: Text('Visualizza PDF', style: TextStyle(fontSize: AppTheme.bodySize(context))),
                             onPressed: () => _showReportDetails(context, report),
                           ),
                           TextButton.icon(
                             style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16)),
                             icon: const Icon(Icons.chat_bubble_outline),
-                            label: const Text('Chat con l\'AI', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                            label: Text('Chat con l\'AI', style: TextStyle(fontSize: AppTheme.bodySize(context), fontWeight: FontWeight.bold)),
                             onPressed: () => showDialog(context: context, builder: (_) => ReportDetailChatScreen(report: report)),
                           )
                         ],
@@ -124,65 +208,6 @@ class ReportsListScreen extends StatelessWidget {
                 ),
               );
             },
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showReportDetails(BuildContext context, Report report) {
-    bool isDesktop = MediaQuery.of(context).size.width >= 800;
-    
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: EdgeInsets.all(isDesktop ? 24 : 16), 
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 900, maxHeight: 900),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
-          child: Column(
-            children: [
-              Container(
-                padding: EdgeInsets.all(isDesktop ? 24 : 16),
-                decoration: const BoxDecoration(color: AppTheme.sidebarBg, borderRadius: BorderRadius.vertical(top: Radius.circular(12))),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Icon(Icons.picture_as_pdf, color: AppTheme.primary),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(report.taskTitle, style: TextStyle(color: Colors.white, fontSize: isDesktop ? 20 : 16, fontWeight: FontWeight.bold))
-                    ),
-                    // ORA QUESTO PULSANTE SCARICA IL PDF VERO!
-                    IconButton(
-                      icon: const Icon(Icons.download, color: Colors.white),
-                      onPressed: () => _downloadRealPDF(context, report),
-                    ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      icon: const Icon(Icons.close, color: Colors.white),
-                      onPressed: () => Navigator.pop(context),
-                    )
-                  ],
-                ),
-              ),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.symmetric(horizontal: isDesktop ? 48 : 24, vertical: isDesktop ? 40 : 24),
-                  child: MarkdownBody(
-                    data: report.aiSummary,
-                    selectable: true,
-                    styleSheet: MarkdownStyleSheet(
-                      h1: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: AppTheme.primaryDark),
-                      h2: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppTheme.textDark, height: 2.5),
-                      p: const TextStyle(fontSize: 16, height: 1.6, color: Colors.black87),
-                      strong: const TextStyle(fontWeight: FontWeight.w800, color: Colors.black),
-                    ),
-                  ),
-                ),
-              ),
-            ],
           ),
         ),
       ),

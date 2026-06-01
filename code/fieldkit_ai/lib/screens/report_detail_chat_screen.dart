@@ -54,18 +54,18 @@ class _ReportDetailChatScreenState extends State<ReportDetailChatScreen> {
     final provider = context.read<AppProvider>();
 
     final promptUnito = """
-    Ecco il report appena compilato:
+    Ecco il report ufficiale appena compilato:
     --- INIZIO REPORT ---
     ${widget.report.aiSummary}
     --- FINE REPORT ---
     
-    Rispondi a questa domanda dell'utente:
-    $userQuery
+    Rispondi in modo professionale a questa richiesta dell'utente:
+    "$userQuery"
     
-    REGOLE IMPERATIVE PER LA FONTE:
-    Alla fine di OGNI tua risposta, devi andare a capo due volte e scrivere ESATTAMENTE questo formato:
-    **Fonte:** [Nome File], [Capitolo/Sezione], Pagina [Numero]
-    Non usare altri colori, elenchi puntati o frasi diverse per indicare la fonte. Se la risposta viene dal report, scrivi "**Fonte:** Report Utente".
+    REGOLE IMPERATIVE PER LA CITAZIONE DELLA FONTE:
+    1. SE E SOLO SE l'informazione per rispondere è presente nel report qui sopra, devi andare a capo alla fine della risposta e scrivere ESATTAMENTE:
+    **Fonte:** Report Utente
+    2. SE LE INFORMAZIONI NON SONO NEL REPORT e stai usando le tue conoscenze generali/tecniche, ASSOLUTAMENTE NON SCRIVERE LA PAROLA "Fonte" e non inserire nulla alla fine.
     """;
 
     final aiResponse = await provider.callBackend(promptUnito);
@@ -81,7 +81,6 @@ class _ReportDetailChatScreenState extends State<ReportDetailChatScreen> {
   Widget build(BuildContext context) {
     bool isDesktop = MediaQuery.of(context).size.width >= 800;
 
-    // Ritorna UN DIALOG TRASPARENTE, identico al Visualizza Report!
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: EdgeInsets.all(isDesktop ? 24 : 16),
@@ -90,16 +89,15 @@ class _ReportDetailChatScreenState extends State<ReportDetailChatScreen> {
         decoration: BoxDecoration(color: AppTheme.background, borderRadius: BorderRadius.circular(12)),
         child: Column(
           children: [
-            // HEADER IDENTICO AL REPORT
             Container(
-              padding: EdgeInsets.all(isDesktop ? 24 : 16),
+              padding: EdgeInsets.all(isDesktop ? 20 : 16),
               decoration: const BoxDecoration(color: AppTheme.sidebarBg, borderRadius: BorderRadius.vertical(top: Radius.circular(12))),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Icon(Icons.auto_awesome, color: AppTheme.primary),
                   const SizedBox(width: 12),
-                  const Expanded(child: Text('Assistente AI', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))),
+                  Expanded(child: Text('Assistente AI', style: TextStyle(color: Colors.white, fontSize: AppTheme.titleSize(context), fontWeight: FontWeight.bold))),
                   IconButton(
                     icon: const Icon(Icons.close, color: Colors.white),
                     onPressed: () => Navigator.pop(context),
@@ -108,7 +106,6 @@ class _ReportDetailChatScreenState extends State<ReportDetailChatScreen> {
               ),
             ),
             
-            // CORPO DELLA CHAT
             Expanded(
               child: ListView.builder(
                 controller: _scrollController,
@@ -135,7 +132,7 @@ class _ReportDetailChatScreenState extends State<ReportDetailChatScreen> {
                       child: MarkdownBody(
                         data: msg.text,
                         styleSheet: MarkdownStyleSheet(
-                          p: TextStyle(color: msg.isUser ? Colors.white : AppTheme.textDark, fontSize: 16, height: 1.5),
+                          p: TextStyle(color: msg.isUser ? Colors.white : AppTheme.textDark, fontSize: AppTheme.bodySize(context), height: 1.5),
                           strong: TextStyle(fontWeight: FontWeight.w900, color: msg.isUser ? Colors.white : AppTheme.primaryDark),
                         ),
                       ),
@@ -148,7 +145,6 @@ class _ReportDetailChatScreenState extends State<ReportDetailChatScreen> {
             if (isAiTyping)
               const Padding(padding: EdgeInsets.symmetric(vertical: 8.0), child: Center(child: CircularProgressIndicator(color: AppTheme.primary))),
               
-            // INPUT IN BASSO
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(color: Colors.white, borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5))]),
