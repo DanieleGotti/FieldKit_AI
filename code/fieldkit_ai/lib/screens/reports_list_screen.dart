@@ -12,7 +12,6 @@ import 'report_detail_chat_screen.dart';
 class ReportsListScreen extends StatelessWidget {
   const ReportsListScreen({super.key});
 
-  // PIALLATORE TOTALE: Rimuove tutto ciò che genera i quadrati neri
   String _sanitizeForPdf(String text) {
     return text
         .replaceAll('’', "'")
@@ -21,9 +20,7 @@ class ReportsListScreen extends StatelessWidget {
         .replaceAll('”', '"')
         .replaceAll('–', '-')
         .replaceAll('—', '-')
-        // Distrugge i cancelletti markdown se l'AI dovesse metterli per sbaglio
         .replaceAll(RegExp(r'^#+\s*'), '') 
-        // Converte i vari tipi di bullet point strani in un semplice trattino
         .replaceAll(RegExp(r'[•·▪▫►♦]'), '-'); 
   }
 
@@ -33,15 +30,13 @@ class ReportsListScreen extends StatelessWidget {
     pw.Widget parseLine(String line) {
       if (line.trim().isEmpty) return pw.SizedBox(height: 8);
       
-      // Prima sanitizziamo pesantemente la riga
       String cleanLine = _sanitizeForPdf(line.trim());
       
       bool isBullet = cleanLine.startsWith('-');
       if (isBullet) {
-        cleanLine = cleanLine.substring(1).trim(); // Togliamo il trattino per usare il bullet nativo del PDF
+        cleanLine = cleanLine.substring(1).trim(); 
       }
 
-      // Se la riga è tutta in grassetto (es. titolo)
       bool isTitleLine = cleanLine.startsWith('**') && cleanLine.endsWith('**') && cleanLine.length > 4;
 
       final spans = <pw.InlineSpan>[];
@@ -54,7 +49,6 @@ class ReportsListScreen extends StatelessWidget {
         }
       }
 
-      // Se è una riga titolo, la facciamo leggermente più grande
       pw.Widget textWidget = pw.RichText(
         text: pw.TextSpan(
           children: spans, 
@@ -72,7 +66,7 @@ class ReportsListScreen extends StatelessWidget {
           child: pw.Row(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              pw.Text('- ', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 11)), // Trattino pulito
+              pw.Text('- ', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 11)), 
               pw.Expanded(child: textWidget),
             ]
           )

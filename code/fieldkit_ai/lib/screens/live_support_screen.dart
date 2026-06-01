@@ -16,7 +16,6 @@ class LiveSupportScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // CALCOLO DINAMICO ASSOLUTO PER EVITARE SOVRAPPOSIZIONI
     double screenWidth = MediaQuery.of(context).size.width;
     double screenHeight = MediaQuery.of(context).size.height;
     
@@ -56,7 +55,7 @@ class LiveSupportScreen extends StatelessWidget {
                         ),
                         child: Stack(
                           children: [
-                            // CENTRO DELLA FOTOCAMERA
+                            // Centro videocamera
                             Center(
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -67,7 +66,7 @@ class LiveSupportScreen extends StatelessWidget {
                                 ],
                               ),
                             ),
-                            // RIQUADRO ESPERTO (Piccolissimo su mobile)
+                            // Riquadro esperto in alto a destra
                             Positioned(
                               top: 16, right: 16,
                               child: Container(
@@ -81,7 +80,7 @@ class LiveSupportScreen extends StatelessWidget {
                                 child: Center(child: Icon(Icons.person, color: Colors.white, size: expertBoxWidth * 0.4)),
                               ),
                             ),
-                            // BADGE LIVE
+                            // Badge LIVE in alto a sinistra
                             Positioned(
                               top: 16, left: 16,
                               child: Container(
@@ -97,7 +96,7 @@ class LiveSupportScreen extends StatelessWidget {
                                 ),
                               ),
                             ),
-                            // BOTTONI CHIAMATA IN BASSO
+                            // Bottoni di chiamata in basso
                             Positioned(
                               bottom: 16, left: 0, right: 0,
                               child: Center(

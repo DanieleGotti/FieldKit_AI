@@ -42,13 +42,12 @@ class AppTheme {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         margin: EdgeInsets.zero,
       ),
-      // --- FIX DEL COLORE ROSINO NELLO SCROLL ---
       appBarTheme: const AppBarTheme(
         backgroundColor: surface,
         foregroundColor: textDark,
         elevation: 0,
-        scrolledUnderElevation: 0, // Toglie l'ombra di scroll
-        surfaceTintColor: Colors.white, // FORZA IL BIANCO ASSOLUTO: impedisce al Material 3 di colorare di rosso/rosa la barra
+        scrolledUnderElevation: 0, 
+        surfaceTintColor: Colors.white, 
         centerTitle: false,
         iconTheme: IconThemeData(color: primary),
       ),

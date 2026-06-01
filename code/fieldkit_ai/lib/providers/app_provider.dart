@@ -31,7 +31,7 @@ class AppProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // --- CHIAMATA AL TUO FUTURO SERVER RENDER ---
+  // Simulazione chiamata al backend per generare un report
   Future<String> callBackend(String prompt) async {
     final url = Uri.parse('/api/chat'); 
 

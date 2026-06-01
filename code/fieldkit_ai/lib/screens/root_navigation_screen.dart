@@ -38,7 +38,6 @@ class _RootNavigationScreenState extends State<RootNavigationScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (isDesktop)
-            // SIDEBAR NATIVA - Zero padding fissi strani, tutto calcolato sulla stessa griglia
             Container(
               width: 250,
               color: AppTheme.sidebarBg,
@@ -69,7 +68,6 @@ class _RootNavigationScreenState extends State<RootNavigationScreen> {
                   
                   const SizedBox(height: 48),
                   
-                  // VOCI DI MENU
                   _buildMenuItem(context, provider, Icons.camera_alt, 'Ispezione', 0),
                   _buildMenuItem(context, provider, Icons.folder_shared, 'Archivio', 1),
                   _buildMenuItem(context, provider, Icons.headset_mic, 'Live', 2),
@@ -101,12 +99,11 @@ class _RootNavigationScreenState extends State<RootNavigationScreen> {
     );
   }
 
-  // Costruttore delle singole voci di menu. Identico al blocco dell'header!
+  // Costruttore delle singole voci di menu. 
   Widget _buildMenuItem(BuildContext context, AppProvider provider, IconData icon, String label, int index) {
     bool isSelected = provider.currentTabIndex == index;
     
     return Padding(
-      // 12px fuori + 12px dentro = 24px di distanza dal bordo sinistro, esattamente come l'header in alto!
       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
       child: Material(
         color: isSelected ? AppTheme.primary : Colors.transparent,

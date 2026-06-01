@@ -64,8 +64,10 @@ class _ReportDetailChatScreenState extends State<ReportDetailChatScreen> {
     
     REGOLE IMPERATIVE PER LA CITAZIONE DELLA FONTE:
     1. SE E SOLO SE l'informazione per rispondere è presente nel report qui sopra, devi andare a capo alla fine della risposta e scrivere ESATTAMENTE:
-    **Fonte:** Report Utente
-    2. SE LE INFORMAZIONI NON SONO NEL REPORT e stai usando le tue conoscenze generali/tecniche, ASSOLUTAMENTE NON SCRIVERE LA PAROLA "Fonte" e non inserire nulla alla fine.
+    **Fonte:** Report utente
+    1. SE E SOLO SE l'informazione per rispondere è presente nei manuali e documenti .pdf, devi andare a capo alla fine della risposta e scrivere ESATTAMENTE:
+    **Fonte:** nome e pagina del manuale (es. Manuale Campo Elettrico, pag. 45)
+    2. SE LE INFORMAZIONI NON SONO NEL REPORT E NEI PDF e stai usando le tue conoscenze generali/tecniche, ASSOLUTAMENTE NON SCRIVERE LA PAROLA "Fonte" e non inserire nulla alla fine.
     """;
 
     final aiResponse = await provider.callBackend(promptUnito);

@@ -50361,7 +50361,7 @@ break}p.ai(new B.ami(p))
 o=p.c
 o.toString
 s=3
-return B.N(B.lD(o,!1,t.gl).pd("    L'operatore sta controllando l'impianto matricola "+m.a.a+'. Note: "'+p.e.a.a+'".\n    \n    REGOLA 1: Se la matricola o le note sono palesemente parole a caso (es. "asdasd"), lettere senza senso o non pertinenti a un ispezione, DEVI BLOCCARE TUTTO e rispondere SOLO con: ERRORE_DATI\n    \n    REGOLA 2: Se i dati hanno senso, genera 3 o 4 domande tecniche mirate. \n    REGOLA ASSOLUTA: NON SCRIVERE MAI LA PAROLA "Fonte", "Trovato in" o riferimenti. SCRIVI SOLO LE DOMANDE. Una per riga. Nessun asterisco.\n    '),$async$zj)
+return B.N(B.lD(o,!1,t.gl).pd("    L'operatore sta controllando l'impianto matricola "+m.a.a+'. Note: "'+p.e.a.a+"\".\n  \n    REGOLA 1: Se la matricola o le note sono palesemente parole a caso (es. \"asdasd\"), lettere senza senso o non pertinenti a un ispezione o macchinari tecnici, DEVI BLOCCARE TUTTO e rispondere SOLO con: ERRORE_DATI\n    \n    REGOLA 2: Se i dati hanno senso, genera 3 o 4 domande prendendo spunto dai pdf di manuali che aiutino l'operatore a verificare lo stato dell'impianto, controllare se ha fatto tutta la procedura e raccogliere tutto ci\xf2 che serve per fare un lavoro e un report completo.\n    \n    REGOLA ASSOLUTA: NON SCRIVERE A FINE DEL MESSAGGIO LE FONTI.\n    \n    REGOLA IMPORTANTISSIMA: Fornisci SOLO le domande, NIENTE ALTRO. Non scrivere introduzioni, spiegazioni o altro. SOLO LE DOMANDE, in elenco puntato, senza numeri, simboli o formattazione. Perch\xe8 estraggo dalle tue righe il testo da mettere nell'app.\n    "),$async$zj)
 case 3:n=b
 if(A.o.t(n,"ERRORE_DATI")){p.ai(new B.amj(p))
 m=p.c.ao(t.Pu)
@@ -50381,7 +50381,7 @@ o=B.lD(p,!1,t.gl)
 p=q.r
 n=new B.a0(p,new B.ame(),B.V(p).i("a0<1,m>")).bI(0,"\n")
 s=2
-return B.N(o.pd("    L'operatore controlla l'impianto "+q.d.a.a+'. Note: "'+q.e.a.a+'". Ha gi\xe0 risposto a:\n    '+n+'\n    Genera 1 SOLA NUOVA domanda tecnica diversa.\n    VIETATO SCRIVERE "Fonte". Fornisci SOLO la domanda.\n    '),$async$yS)
+return B.N(o.pd("    L'operatore controlla l'impianto "+q.d.a.a+'. Note: "'+q.e.a.a+'". Ha gi\xe0 risposto a:\n    '+n+"\n\n    Genera 1 SOLA NUOVA domanda tecnica diversa.\n\n    REGOLA ASSOLUTA: NON SCRIVERE A FINE DEL MESSAGGIO LE FONTI. \n\n    REGOLA IMPORTANTISSIMA: Fornisci SOLO la domanda, NIENTE ALTRO. Non scrivere introduzioni, spiegazioni o altro. SOLO LA DOMANDA, senza numeri, simboli o formattazione.\n    "),$async$yS)
 case 2:m=b
 p=B.aA("^\\d+\\.\\s*|-\\s*|\\*",!0,!1,!1)
 q.ai(new B.amf(q,A.o.em(B.d_(m,p,""))))
@@ -50401,7 +50401,7 @@ p=q.d
 j=p.a.a
 i=q.e
 s=2
-return B.N(o.pd("    Agisci come un Ingegnere Manutentore Senior. Redigi il report tecnico finale dell'ispezione usando formattazione MARKDOWN (usa solo **grassetto**, NESSUN CANCELLETTO #).\n\n    Dati da fondere:\n    Matricola: "+j+"\n    Note rilevate inizialmente: "+i.a.a+"\n    \n    Dati Verificati (da mettere nel Punto 2): \n    "+n+"\n    \n    Verifiche Saltate (da mettere nel Punto 3 come azioni future da compiere):\n    "+m+'\n\n    REGOLA TASSATIVA: Non dire MAI che l\'operatore non ha risposto a una domanda o ha saltato dei passaggi. Le "Verifiche Saltate" devono essere inserite nel Punto 3 trasformandole elegantemente in "Si raccomanda per il futuro di verificare..." o "Prossimi step suggeriti: ...".\n\n    Segui ESATTAMENTE questa struttura compilando i campi in modo narrativo impersonale. (NON usare simboli # per i titoli):\n\n    **REPORT DI MANUTENZIONE TECNICA E CONFORMIT\xc0**\n    **Tecnico Responsabile:** '+o.b+"\n    **Data:** Oggi\n    **Matricola Impianto:** "+j+'\n\n    **1. STATO DELL\'ARTE E ANAGRAFICA IMPIANTO**\n    [Fondi le note iniziali in un\'introduzione discorsiva]\n\n    **2. ESITO DELLE VERIFICHE TECNICHE APPROFONDITE**\n    [Descrivi i risultati basandoti SOLO sui "Dati Verificati"]\n\n    **3. RACCOMANDAZIONI E INTERVENTI SUGGERITI**\n    [Inserisci qui le "Verifiche Saltate" trasformandole in consigli per interventi futuri, oltre ad altre raccomandazioni necessarie]\n    '),$async$zc)
+return B.N(o.pd("    Agisci come un Ingegnere Manutentore Senior. Redigi il report tecnico finale dell'ispezione usando formattazione MARKDOWN, usa solo **grassetto**, nessun cancelletto #, elenchi o spaziature particolari. Questo perch\xe8 deve essere traducibile da un lettore pdf molto semplice.\n\n    Dati da fondere:\n    Matricola: "+j+"\n    Note rilevate inizialmente: "+i.a.a+"\n    \n    Dati Verificati (da mettere nel Punto 2): \n    "+n+"\n    \n    Verifiche Saltate (da mettere nel Punto 3 come azioni future da compiere):\n    "+m+'\n\n    REGOLA TASSATIVA: Non dire MAI che l\'operatore non ha risposto a una domanda o ha saltato dei passaggi. Le "Verifiche Saltate" devono essere inserite nel Punto 3 trasformandole elegantemente in "Si raccomanda per il futuro di verificare..." o "Prossimi step suggeriti: ...".\n    \n    Segui ESATTAMENTE questa struttura compilando i campi in modo narrativo impersonale:\n\n    **REPORT DI MANUTENZIONE TECNICA E CONFORMIT\xc0**\n    **Tecnico Responsabile:** '+o.b+"\n    **Data:** Oggi\n    **Matricola Impianto:** "+j+'\n\n    **1. STATO DELL\'ARTE E ANAGRAFICA IMPIANTO**\n    [Fondi le note iniziali in un\'introduzione discorsiva]\n\n    **2. ESITO DELLE VERIFICHE TECNICHE APPROFONDITE**\n    [Descrivi i risultati basandoti SOLO sui "Dati Verificati"]\n\n    **3. RACCOMANDAZIONI E INTERVENTI SUGGERITI**\n    [Inserisci qui le "Verifiche Saltate" trasformandole in consigli per interventi futuri, oltre ad altre raccomandazioni necessarie]\n    '),$async$zc)
 case 2:h=b
 j=p.a.a
 g=o.e
@@ -50578,7 +50578,7 @@ o=p.c
 o.toString
 m=B
 s=3
-return B.N(B.lD(o,!1,t.gl).pd("    Ecco il report ufficiale appena compilato:\n    --- INIZIO REPORT ---\n    "+p.a.c.e+"\n    --- FINE REPORT ---\n    \n    Rispondi in modo professionale a questa richiesta dell'utente:\n    \""+n+'"\n    \n    REGOLE IMPERATIVE PER LA CITAZIONE DELLA FONTE:\n    1. SE E SOLO SE l\'informazione per rispondere \xe8 presente nel report qui sopra, devi andare a capo alla fine della risposta e scrivere ESATTAMENTE:\n    **Fonte:** Report Utente\n    2. SE LE INFORMAZIONI NON SONO NEL REPORT e stai usando le tue conoscenze generali/tecniche, ASSOLUTAMENTE NON SCRIVERE LA PAROLA "Fonte" e non inserire nulla alla fine.\n    '),$async$vh)
+return B.N(B.lD(o,!1,t.gl).pd("    Ecco il report ufficiale appena compilato:\n    --- INIZIO REPORT ---\n    "+p.a.c.e+"\n    --- FINE REPORT ---\n    \n    Rispondi in modo professionale a questa richiesta dell'utente:\n    \""+n+'"\n    \n    REGOLE IMPERATIVE PER LA CITAZIONE DELLA FONTE:\n    1. SE E SOLO SE l\'informazione per rispondere \xe8 presente nel report qui sopra, devi andare a capo alla fine della risposta e scrivere ESATTAMENTE:\n    **Fonte:** Report utente\n    1. SE E SOLO SE l\'informazione per rispondere \xe8 presente nei manuali e documenti .pdf, devi andare a capo alla fine della risposta e scrivere ESATTAMENTE:\n    **Fonte:** nome e pagina del manuale (es. Manuale Campo Elettrico, pag. 45)\n    2. SE LE INFORMAZIONI NON SONO NEL REPORT E NEI PDF e stai usando le tue conoscenze generali/tecniche, ASSOLUTAMENTE NON SCRIVERE LA PAROLA "Fonte" e non inserire nulla alla fine.\n    '),$async$vh)
 case 3:p.ai(new m.aq1(p,b))
 p.Tu()
 case 1:return B.J(q,r)}})
@@ -107965,7 +107965,7 @@ A.n7=new B.aY(4e6)
 A.aGc=new B.lP(A.aLQ,null,null,null,null,null,null,null,null,null,null,null,null,A.n7,null,null,null,A.aC,null)
 A.aLS=new B.fM("Funzionalit\xe0 in fase di sviluppo. Disponibile a breve!",null,null,null,null,null,null,null,null,null)
 A.Jv=new B.lP(A.aLS,A.cA,null,null,null,null,null,null,A.pE,null,null,null,null,A.n7,null,null,null,A.aC,null)
-A.aLP=new B.fM("Dati non validi o senza senso. Inserisci dati reali.",null,null,null,null,null,null,null,null,null)
+A.aLP=new B.fM("Dati non validi. Inserisci dati reali.",null,null,null,null,null,null,null,null,null)
 A.aGd=new B.lP(A.aLP,A.mM,null,null,null,null,null,null,null,null,null,null,null,A.n7,null,null,null,A.aC,null)
 A.Jw=new B.QD(0,"permissive")
 A.aPR=new B.QD(1,"normal")

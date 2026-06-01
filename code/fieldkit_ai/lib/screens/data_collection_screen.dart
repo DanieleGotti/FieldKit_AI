@@ -36,27 +36,30 @@ class _DataCollectionScreenState extends State<DataCollectionScreen> with Automa
     setState(() { isLoadingAiQuestions = true; aiQuestionsList.clear(); aiAnswersCtrls.clear(); });
     final provider = context.read<AppProvider>();
     
-    // PROMPT BLINDATO: Niente "Fonte", controllo stronzate
+    // Prompt dettagliato per guidare l'AI a generare domande tecniche pertinenti
     final prompt = """
     L'operatore sta controllando l'impianto matricola ${_idCtrl.text}. Note: "${_notesCtrl.text}".
+  
+    REGOLA 1: Se la matricola o le note sono palesemente parole a caso (es. "asdasd"), lettere senza senso o non pertinenti a un ispezione o macchinari tecnici, DEVI BLOCCARE TUTTO e rispondere SOLO con: ERRORE_DATI
     
-    REGOLA 1: Se la matricola o le note sono palesemente parole a caso (es. "asdasd"), lettere senza senso o non pertinenti a un ispezione, DEVI BLOCCARE TUTTO e rispondere SOLO con: ERRORE_DATI
+    REGOLA 2: Se i dati hanno senso, genera 3 o 4 domande prendendo spunto dai pdf di manuali che aiutino l'operatore a verificare lo stato dell'impianto, controllare se ha fatto tutta la procedura e raccogliere tutto ciò che serve per fare un lavoro e un report completo.
     
-    REGOLA 2: Se i dati hanno senso, genera 3 o 4 domande tecniche mirate. 
-    REGOLA ASSOLUTA: NON SCRIVERE MAI LA PAROLA "Fonte", "Trovato in" o riferimenti. SCRIVI SOLO LE DOMANDE. Una per riga. Nessun asterisco.
+    REGOLA ASSOLUTA: NON SCRIVERE A FINE DEL MESSAGGIO LE FONTI.
+    
+    REGOLA IMPORTANTISSIMA: Fornisci SOLO le domande, NIENTE ALTRO. Non scrivere introduzioni, spiegazioni o altro. SOLO LE DOMANDE, in elenco puntato, senza numeri, simboli o formattazione. Perchè estraggo dalle tue righe il testo da mettere nell'app.
     """;
 
     final response = await provider.callBackend(prompt);
 
     if (response.contains("ERRORE_DATI")) {
       setState(() => isLoadingAiQuestions = false);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Dati non validi o senza senso. Inserisci dati reali.'), backgroundColor: AppTheme.error));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Dati non validi. Inserisci dati reali.'), backgroundColor: AppTheme.error));
       return;
     }
 
     List<String> rawQuestions = response.split('\n')
         .map((q) => q.replaceAll(RegExp(r'^\d+\.\s*|-\s*|\*'), '').trim())
-        .where((q) => q.isNotEmpty && !q.toLowerCase().contains("fonte")) // Filtro anti-allucinazione aggiuntivo
+        .where((q) => q.isNotEmpty && !q.toLowerCase().contains("fonte")) 
         .toList();
 
     setState(() {
@@ -75,8 +78,12 @@ class _DataCollectionScreenState extends State<DataCollectionScreen> with Automa
     final prompt = """
     L'operatore controlla l'impianto ${_idCtrl.text}. Note: "${_notesCtrl.text}". Ha già risposto a:
     $alreadyAsked
+
     Genera 1 SOLA NUOVA domanda tecnica diversa.
-    VIETATO SCRIVERE "Fonte". Fornisci SOLO la domanda.
+
+    REGOLA ASSOLUTA: NON SCRIVERE A FINE DEL MESSAGGIO LE FONTI. 
+
+    REGOLA IMPORTANTISSIMA: Fornisci SOLO la domanda, NIENTE ALTRO. Non scrivere introduzioni, spiegazioni o altro. SOLO LA DOMANDA, senza numeri, simboli o formattazione.
     """;
 
     final response = await provider.callBackend(prompt);
@@ -95,7 +102,7 @@ class _DataCollectionScreenState extends State<DataCollectionScreen> with Automa
     setState(() => isLoadingAiQuestions = true);
     final provider = context.read<AppProvider>();
 
-    // DIVISIONE INTELLIGENTE: Domande risposte vs Domande vuote
+    // Divisione domande risposte vs domande vuote
     String answeredQA = "";
     String unansweredQuestions = "";
     
@@ -113,7 +120,7 @@ class _DataCollectionScreenState extends State<DataCollectionScreen> with Automa
     if (unansweredQuestions.isEmpty) unansweredQuestions = "Nessuna raccomandazione specifica aggiuntiva.";
 
     final prompt = """
-    Agisci come un Ingegnere Manutentore Senior. Redigi il report tecnico finale dell'ispezione usando formattazione MARKDOWN (usa solo **grassetto**, NESSUN CANCELLETTO #).
+    Agisci come un Ingegnere Manutentore Senior. Redigi il report tecnico finale dell'ispezione usando formattazione MARKDOWN, usa solo **grassetto**, nessun cancelletto #, elenchi o spaziature particolari. Questo perchè deve essere traducibile da un lettore pdf molto semplice.
 
     Dati da fondere:
     Matricola: ${_idCtrl.text}
@@ -126,8 +133,8 @@ class _DataCollectionScreenState extends State<DataCollectionScreen> with Automa
     $unansweredQuestions
 
     REGOLA TASSATIVA: Non dire MAI che l'operatore non ha risposto a una domanda o ha saltato dei passaggi. Le "Verifiche Saltate" devono essere inserite nel Punto 3 trasformandole elegantemente in "Si raccomanda per il futuro di verificare..." o "Prossimi step suggeriti: ...".
-
-    Segui ESATTAMENTE questa struttura compilando i campi in modo narrativo impersonale. (NON usare simboli # per i titoli):
+    
+    Segui ESATTAMENTE questa struttura compilando i campi in modo narrativo impersonale:
 
     **REPORT DI MANUTENZIONE TECNICA E CONFORMITÀ**
     **Tecnico Responsabile:** ${provider.loggedUser}
