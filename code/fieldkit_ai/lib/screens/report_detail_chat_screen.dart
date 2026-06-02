@@ -59,7 +59,7 @@ class _ReportDetailChatScreenState extends State<ReportDetailChatScreen> {
     ${widget.report.aiSummary}
     --- FINE REPORT ---
     
-    RICERCA FONDAMENTALE: Prima di rispondere che non possiedi un'informazione, DEVI cercare approfonditamente nei manuali tecnici e documenti .pdf a tua disposizione.
+    RICERCA FONDAMENTALE: Prima di rispondere, DEVI cercare approfonditamente nei manuali tecnici e documenti .pdf a tua disposizione.
     
     Rispondi in modo professionale a questa richiesta dell'utente:
     "$userQuery"
@@ -67,9 +67,9 @@ class _ReportDetailChatScreenState extends State<ReportDetailChatScreen> {
     REGOLE IMPERATIVE PER LA CITAZIONE DELLA FONTE:
     1. Scrivi la fonte in una sola riga alla fine, formattata ESATTAMENTE così: "**Fonte:** [Nome fonte]". 
     2. VIETATO usare frasi introduttive come "Trovato nei documenti", "Trovato nel report". Scrivi SOLO "**Fonte:** ...".
-    3. Se l'info è nel report qui sopra scrivi: "**Fonte:** Report utente".
+    3. Se l'info è nel esplicitamente nel report qui sopra scrivi: "**Fonte:** Report utente".
     4. Se l'info è nei manuali PDF scrivi: "**Fonte:** [Nome e pagina del manuale]".
-    5. Se NON usi né report né manuali: NON SCRIVERE NULLA ALLA FINE.
+    5. Se l'info non è né in report né nei manuali: NON SCRIVERE NULLA ALLA FINE.
     """;
 
     final aiResponse = await provider.callBackend(promptUnito);

@@ -162,7 +162,7 @@ class _DataCollectionScreenState extends State<DataCollectionScreen> with Automa
         .trim();
         
     // Aggiungianta della fonte 
-    cleanReport += "\n\n**Fonte:** Input utente e manuali tecnici";
+    cleanReport += "\n\n**Fonte:** Input utente e manuali tecnici.";
 
     provider.addGeneratedReport("Report: ${_idCtrl.text}", cleanReport);
 

@@ -3,8 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   static double titleSize(BuildContext context) => MediaQuery.of(context).size.width >= 800 ? 16 : 16;
-  static double bodySize(BuildContext context) => MediaQuery.of(context).size.width >= 800 ? 11 : 11;
-  static double smallSize(BuildContext context) => MediaQuery.of(context).size.width >= 800 ? 10 : 10;
+  static double bodySize(BuildContext context) => MediaQuery.of(context).size.width >= 800 ? 12 : 12;
+  static double smallSize(BuildContext context) => MediaQuery.of(context).size.width >= 800 ? 11 : 11;
 
   static const Color primary = Color(0xFFC62828); 
   static const Color primaryDark = Color(0xFF8E0000); 
