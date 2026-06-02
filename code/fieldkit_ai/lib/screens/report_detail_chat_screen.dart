@@ -65,11 +65,11 @@ class _ReportDetailChatScreenState extends State<ReportDetailChatScreen> {
     "$userQuery"
     
     REGOLE IMPERATIVE PER LA CITAZIONE DELLA FONTE:
-    1. Scrivi la fonte in una sola riga alla fine, formattata ESATTAMENTE così: "**Fonte:** [Nome fonte]". 
-    2. VIETATO usare frasi introduttive come "Trovato nei documenti", "Trovato nel report". Scrivi SOLO "**Fonte:** ...".
-    3. Se l'info è nel esplicitamente nel report qui sopra scrivi: "**Fonte:** Report utente".
-    4. Se l'info è nei manuali PDF scrivi: "**Fonte:** [Nome e pagina del manuale]".
-    5. Se l'info non è né in report né nei manuali: NON SCRIVERE NULLA ALLA FINE.
+    1. Scrivi la fonte in una sola riga alla fine, formattata ESATTAMENTE come specificato ai punti 3, 4 e 5. 
+    2. VIETATO usare frasi introduttive come "Trovato nei documenti", "Trovato nel report", ecc. 
+    3. Se l'info è esplicitamente nel report qui sopra scrivi: "**Fonte:** Report utente".
+    4. Se l'info è esplicitamente nei manuali PDF scrivi: "**Fonte:** [Nome e pagina del manuale]".
+    5. Se l'info non è né in report né nei manuali o l'utente fa domande non rilevanti al contesto: NON SCRIVERE NESSUNA FONTE ALLA FINE DEL MESSAGGIO (NO "**Fonte: ...**) e inoltre SCRIVI A INIZIO MESSAGGIO: "Domanda non pertinente o informazione non trovata nei manuali".
     """;
 
     final aiResponse = await provider.callBackend(promptUnito);

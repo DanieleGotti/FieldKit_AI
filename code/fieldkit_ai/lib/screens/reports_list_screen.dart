@@ -41,21 +41,16 @@ class ReportsListScreen extends StatelessWidget {
 
       final spans = <pw.InlineSpan>[];
       
-      // 1. Prima dividiamo per il GRASSETTO (doppio asterisco)
       final boldParts = cleanLine.split('**');
       for (int i = 0; i < boldParts.length; i++) {
         if (i % 2 != 0) { 
-          // Siamo dentro i doppi asterischi: Applichiamo il GRASSETTO
           spans.add(pw.TextSpan(text: boldParts[i], style: pw.TextStyle(fontWeight: pw.FontWeight.bold)));
         } else {
-          // 2. Fuori dal grassetto, dividiamo per l'ITALICO (singolo asterisco)
           final italicParts = boldParts[i].split('*');
           for (int j = 0; j < italicParts.length; j++) {
             if (j % 2 != 0) {
-              // Siamo dentro al singolo asterisco: Applichiamo l'ITALICO
               spans.add(pw.TextSpan(text: italicParts[j], style: pw.TextStyle(fontStyle: pw.FontStyle.italic)));
             } else {
-              // Testo normale
               spans.add(pw.TextSpan(text: italicParts[j]));
             }
           }
