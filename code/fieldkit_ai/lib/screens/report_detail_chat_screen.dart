@@ -65,20 +65,31 @@ class _ReportDetailChatScreenState extends State<ReportDetailChatScreen> {
     "$userQuery"
     
     REGOLE IMPERATIVE PER LA CITAZIONE DELLA FONTE:
-    1. Scrivi la fonte in una sola riga alla fine, formattata ESATTAMENTE come specificato ai punti 3, 4 e 5. 
-    2. VIETATO usare frasi introduttive come "Trovato nei documenti", "Trovato nel report", ecc. 
-    3. Se l'info è esplicitamente nel report qui sopra scrivi: "**Fonte:** Report utente".
-    4. Se l'info è esplicitamente nei manuali PDF scrivi: "**Fonte:** [Nome e pagina del manuale]".
-    5. Se l'info non è né in report né nei manuali o l'utente fa domande non rilevanti al contesto: NON SCRIVERE NESSUNA FONTE ALLA FINE DEL MESSAGGIO (NO "**Fonte: ...**) e inoltre SCRIVI A INIZIO MESSAGGIO: "Domanda non pertinente o informazione non trovata nei manuali".
+    Analizza la tua risposta e applica ESATTAMENTE UNO di questi 3 casi:
+    CASO 1: Trovi la risposta nel report qui sopra -> Scrivi alla fine del messaggio in una nuova riga: "**Fonte:** Report utente"
+    CASO 2: Trovi la risposta nei manuali tecnici PDF -> Scrivi alla fine del messaggio in una nuova riga: "**Fonte:** [Nome manuale, Pagina]"
+    CASO 3: Non trovi la risposta da nessuna parte (né report, né manuali) -> DEVI iniziare la risposta con "Informazione non trovata." ed è ASSOLUTAMENTE VIETATO scrivere la parola "Fonte" in qualsiasi parte del messaggio.
     """;
 
     final aiResponse = await provider.callBackend(promptUnito);
     
-    // Pulizia della stringa
+    // 1. Pulizia standard delle iniezioni
     String cleanResponse = aiResponse
         .replaceAll(RegExp(r'Trovato nei documenti\.\s*'), '')
         .replaceAll(RegExp(r'Trovato nel report\.\s*'), '')
         .trim();
+
+    // 2. GHIGLIOTTINA DI SICUREZZA:
+    // Se l'AI dice che non ha l'informazione ma per errore appiccica la fonte, 
+    // la rimuoviamo brutalmente da codice.
+    if (cleanResponse.toLowerCase().contains("non trovata") || 
+        cleanResponse.toLowerCase().contains("non trattato") || 
+        cleanResponse.toLowerCase().contains("non pertinente") ||
+        cleanResponse.toLowerCase().contains("non è presente")) {
+      
+      // Rimuove qualsiasi stringa che inizi per "**Fonte:**" o "Fonte:" fino alla fine
+      cleanResponse = cleanResponse.replaceAll(RegExp(r'\**Fonte:\**.*', caseSensitive: false, dotAll: true), '').trim();
+    }
 
     setState(() {
       isAiTyping = false;
