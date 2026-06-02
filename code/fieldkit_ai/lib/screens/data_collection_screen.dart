@@ -102,6 +102,9 @@ class _DataCollectionScreenState extends State<DataCollectionScreen> with Automa
     setState(() => isLoadingAiQuestions = true);
     final provider = context.read<AppProvider>();
 
+    final now = DateTime.now();
+    final formattedDate = '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}';
+
     String answeredQA = "";
     String unansweredQuestions = "";
     
@@ -139,7 +142,7 @@ class _DataCollectionScreenState extends State<DataCollectionScreen> with Automa
 
     **REPORT DI MANUTENZIONE TECNICA E CONFORMITÀ**
     **Tecnico Responsabile:** ${provider.loggedUser}
-    **Data:** Oggi
+    **Data:** $formattedDate
     **Matricola Impianto:** ${_idCtrl.text}
 
     **1. STATO DELL'ARTE E ANAGRAFICA IMPIANTO**

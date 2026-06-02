@@ -52,13 +52,17 @@ class AppProvider extends ChangeNotifier {
   }
 
   void addGeneratedReport(String title, String content) {
+    // Data odierna formattata GG/MM/AAAA
+    final now = DateTime.now();
+    final formattedDate = '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}';
+
     completedReports.insert(0, Report(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       taskTitle: title,
-      date: 'Oggi',
+      date: formattedDate,
       status: 'Generato',
       aiSummary: content,
     ));
-    setTab(1); // Vai all'archivio
+    setTab(1); 
   }
 }
