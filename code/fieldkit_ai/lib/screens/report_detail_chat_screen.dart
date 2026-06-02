@@ -59,22 +59,30 @@ class _ReportDetailChatScreenState extends State<ReportDetailChatScreen> {
     ${widget.report.aiSummary}
     --- FINE REPORT ---
     
+    RICERCA FONDAMENTALE: Prima di rispondere che non possiedi un'informazione, DEVI cercare approfonditamente nei manuali tecnici e documenti .pdf a tua disposizione.
+    
     Rispondi in modo professionale a questa richiesta dell'utente:
     "$userQuery"
     
     REGOLE IMPERATIVE PER LA CITAZIONE DELLA FONTE:
-    1. SE E SOLO SE l'informazione per rispondere è presente nel report qui sopra, devi andare a capo alla fine della risposta e scrivere ESATTAMENTE:
-    **Fonte:** Report utente
-    1. SE E SOLO SE l'informazione per rispondere è presente nei manuali e documenti .pdf, devi andare a capo alla fine della risposta e scrivere ESATTAMENTE:
-    **Fonte:** nome e pagina del manuale (es. Manuale Campo Elettrico, pag. 45)
-    2. SE LE INFORMAZIONI NON SONO NEL REPORT E NEI PDF e stai usando le tue conoscenze generali/tecniche, ASSOLUTAMENTE NON SCRIVERE LA PAROLA "Fonte" e non inserire nulla alla fine.
+    1. Scrivi la fonte in una sola riga alla fine, formattata ESATTAMENTE così: "**Fonte:** [Nome fonte]". 
+    2. VIETATO usare frasi introduttive come "Trovato nei documenti", "Trovato nel report". Scrivi SOLO "**Fonte:** ...".
+    3. Se l'info è nel report qui sopra scrivi: "**Fonte:** Report utente".
+    4. Se l'info è nei manuali PDF scrivi: "**Fonte:** [Nome e pagina del manuale]".
+    5. Se NON usi né report né manuali: NON SCRIVERE NULLA ALLA FINE.
     """;
 
     final aiResponse = await provider.callBackend(promptUnito);
+    
+    // Pulizia della stringa
+    String cleanResponse = aiResponse
+        .replaceAll(RegExp(r'Trovato nei documenti\.\s*'), '')
+        .replaceAll(RegExp(r'Trovato nel report\.\s*'), '')
+        .trim();
 
     setState(() {
       isAiTyping = false;
-      _messages.add(ChatMessage(text: aiResponse, isUser: false));
+      _messages.add(ChatMessage(text: cleanResponse, isUser: false));
     });
     _scrollToBottom();
   }

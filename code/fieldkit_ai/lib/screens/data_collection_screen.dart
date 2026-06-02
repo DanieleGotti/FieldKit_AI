@@ -42,7 +42,7 @@ class _DataCollectionScreenState extends State<DataCollectionScreen> with Automa
   
     REGOLA 1: Se la matricola o le note sono palesemente parole a caso (es. "asdasd"), lettere senza senso o non pertinenti a un ispezione o macchinari tecnici, DEVI BLOCCARE TUTTO e rispondere SOLO con: ERRORE_DATI
     
-    REGOLA 2: Se i dati hanno senso, genera 3 o 4 domande prendendo spunto dai pdf di manuali che aiutino l'operatore a verificare lo stato dell'impianto, controllare se ha fatto tutta la procedura e raccogliere tutto ciò che serve per fare un lavoro e un report completo.
+    REGOLA 2: Se i dati hanno senso, genera 3 domande prendendo spunto dai pdf di manuali che aiutino l'operatore a verificare lo stato dell'impianto, controllare se ha fatto tutta la procedura o raccogliere tutto ciò che serve per fare un lavoro e un report completo.
     
     REGOLA ASSOLUTA: NON SCRIVERE A FINE DEL MESSAGGIO LE FONTI.
     
@@ -102,7 +102,6 @@ class _DataCollectionScreenState extends State<DataCollectionScreen> with Automa
     setState(() => isLoadingAiQuestions = true);
     final provider = context.read<AppProvider>();
 
-    // Divisione domande risposte vs domande vuote
     String answeredQA = "";
     String unansweredQuestions = "";
     
@@ -115,12 +114,13 @@ class _DataCollectionScreenState extends State<DataCollectionScreen> with Automa
       }
     }
 
-    // Se non ha risposto a niente ed è vuoto, lo blocchiamo
     if (answeredQA.isEmpty) answeredQA = "Nessuna verifica aggiuntiva effettuata durante l'ispezione.";
     if (unansweredQuestions.isEmpty) unansweredQuestions = "Nessuna raccomandazione specifica aggiuntiva.";
 
     final prompt = """
-    Agisci come un Ingegnere Manutentore Senior. Redigi il report tecnico finale dell'ispezione usando formattazione MARKDOWN, usa solo **grassetto**, nessun cancelletto #, elenchi o spaziature particolari. Questo perchè deve essere traducibile da un lettore pdf molto semplice.
+    Agisci come un Ingegnere Manutentore Senior. Redigi il report tecnico finale dell'ispezione usando formattazione MARKDOWN, usa solo **grassetto**, nessun cancelletto #, elenchi o spaziature particolari. 
+    
+    RICERCA MANUALI: Consulta attivamente i manuali tecnici PDF a tua disposizione per arricchire il Punto 3 con dettagli specifici, tolleranze o procedure ufficiali.
 
     Dati da fondere:
     Matricola: ${_idCtrl.text}
@@ -132,9 +132,10 @@ class _DataCollectionScreenState extends State<DataCollectionScreen> with Automa
     Verifiche Saltate (da mettere nel Punto 3 come azioni future da compiere):
     $unansweredQuestions
 
-    REGOLA TASSATIVA: Non dire MAI che l'operatore non ha risposto a una domanda o ha saltato dei passaggi. Le "Verifiche Saltate" devono essere inserite nel Punto 3 trasformandole elegantemente in "Si raccomanda per il futuro di verificare..." o "Prossimi step suggeriti: ...".
+    REGOLA TASSATIVA 1: Non dire MAI che l'operatore non ha risposto a una domanda o ha saltato dei passaggi. Le "Verifiche Saltate" devono essere inserite nel Punto 3 trasformandole elegantemente in raccomandazioni.
+    REGOLA TASSATIVA 2: NON INSERIRE ALCUNA FONTE ALLA FINE DEL REPORT. Non scrivere "Trovato nei documenti" o altro. Lo farà il sistema in automatico.
     
-    Segui ESATTAMENTE questa struttura compilando i campi in modo narrativo impersonale:
+    Segui ESATTAMENTE questa struttura:
 
     **REPORT DI MANUTENZIONE TECNICA E CONFORMITÀ**
     **Tecnico Responsabile:** ${provider.loggedUser}
@@ -148,11 +149,22 @@ class _DataCollectionScreenState extends State<DataCollectionScreen> with Automa
     [Descrivi i risultati basandoti SOLO sui "Dati Verificati"]
 
     **3. RACCOMANDAZIONI E INTERVENTI SUGGERITI**
-    [Inserisci qui le "Verifiche Saltate" trasformandole in consigli per interventi futuri, oltre ad altre raccomandazioni necessarie]
+    [Inserisci qui le raccomandazioni e integra nozioni dai manuali tecnici]
     """;
 
     final reportContent = await provider.callBackend(prompt);
-    provider.addGeneratedReport("Report: ${_idCtrl.text}", reportContent);
+    
+    // Pulizia stringa
+    String cleanReport = reportContent
+        .replaceAll(RegExp(r'Trovato nei documenti\.\s*'), '')
+        .replaceAll(RegExp(r'Trovato nel report\.\s*'), '')
+        .replaceAll(RegExp(r"Fonte: dati forniti dall'utente.*"), '')
+        .trim();
+        
+    // Aggiungianta della fonte 
+    cleanReport += "\n\n**Fonte:** Input utente e manuali tecnici";
+
+    provider.addGeneratedReport("Report: ${_idCtrl.text}", cleanReport);
 
     _idCtrl.clear();
     _notesCtrl.clear();
@@ -235,9 +247,20 @@ class _DataCollectionScreenState extends State<DataCollectionScreen> with Automa
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  'Domanda ${index + 1}: ${aiQuestionsList[index]}', 
-                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: AppTheme.bodySize(context), color: AppTheme.primaryDark, height: 1.5)
+                                RichText(
+                                  text: TextSpan(
+                                    style: TextStyle(fontSize: AppTheme.bodySize(context), height: 1.5),
+                                    children: [
+                                      TextSpan(
+                                        text: 'Domanda ${index + 1}: ',
+                                        style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primary), 
+                                      ),
+                                      TextSpan(
+                                        text: aiQuestionsList[index],
+                                        style: const TextStyle(fontWeight: FontWeight.normal, color: AppTheme.textDark),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                                 const SizedBox(height: 16),
                                 TextField(
