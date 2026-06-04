@@ -1,4 +1,4 @@
-# ![logo](code/fieldkit_ai/lib/assets/icons/logo.png) FieldKit AI 
+# <img src="code/fieldkit_ai/lib/assets/icons/logo.png" height="48" align="center"> FieldKit AI 
 ### CREO-LAB: Tecnologie Digitali e Intelligenza Artificiale - 2026
 
 ## 🚀 Progetto
@@ -17,6 +17,6 @@ Il progetto è sviluppato con architettura client-server:
 - **Backend ([Node.js](https://nodejs.org/)):** API REST ospitata su **[Render](https://render.com/)**, che fa da ponte tra l'app e **[Mistral AI](https://mistral.ai/)**.
 
 ## 👨‍💻 Sviluppatore
-| Nome e Cognome | Profilo GitHub |
+| Nome | GitHub |
 |----------------|----------------|
 | **Daniele Gotti** | [@DanieleGotti](https://github.com/DanieleGotti) |
