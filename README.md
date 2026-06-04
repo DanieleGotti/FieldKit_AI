@@ -7,13 +7,12 @@
 Il cuore dell'app è un sistema **RAG (Retrieval-Augmented Generation)**: l'AI legge e comprende complessi manuali normativi, fornendo risposte precise e citando la fonte esatta, bloccando le allucinazioni in caso di domande non pertinenti alla sicurezza antincendio.
 
 ## 🎥 Video  
-Clicca sull'immagine qui sotto per vedere una dimostrazione pratica dell'applicazione e della chat con l'AI:
 
 https://github.com/user-attachments/assets/27852ec5-ecf3-4b74-93d0-822e320e717a
 
 ## 🛠️ Struttura 
 Il progetto è sviluppato con architettura client-server:
-- **Frontend ([Flutter](https://flutter.dev/)):** Interfaccia utente fluida e responsiva, suddivisa in Ispezione, Archivio (con generazione PDF nativa) e Live.
+- **Frontend ([Flutter](https://flutter.dev/)):** Interfaccia utente fluida e responsiva, suddivisa in Ispezione, Archivio e Live.
 - **Backend ([Node.js](https://nodejs.org/)):** API REST ospitata su **[Render](https://render.com/)**, che fa da ponte tra l'app e **[Mistral AI](https://mistral.ai/)**.
 
 ## 👨‍💻 Sviluppatore
