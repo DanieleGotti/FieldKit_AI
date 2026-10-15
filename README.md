@@ -1,4 +1,4 @@
-# <img src="code/fieldkit_ai/lib/assets/icons/logo.png" height="48" align="center"> FieldKit AI 
+# <img src="code/fieldkit_ai/lib/assets/icons/logo.png" height="48" align="top"> FieldKit AI 
 ### CREO-LAB: Tecnologie Digitali e Intelligenza Artificiale - 2026
 
 ## 🚀 Progetto
